@@ -1,60 +1,32 @@
-﻿---
-title: Reasoning Models â€” FAQ
+---
+title: Reasoning Models — FAQ
 service: 02-Reasoning-Models
 section: 00-Overview
 file: FAQ.md
 last_updated: 2026-07-28
-tags: [reasoning-models, deepseek-r1, o1, cot, 00-overview, faq]
+tags: [reasoning-models, faq, Q&A]
 author: Antigravity AI Knowledge Engine
 ---
 
-# FAQ
+# Frequently Asked Questions
 
-## Executive Summary
-Detailed technical breakdown of **FAQ** within the **00-Overview** domain of AI Reasoning Models (Chain-of-Thought / Test-Time Compute Scaling).
+Common questions and architectural concerns regarding integrating and deploying reasoning models.
 
-## Key Concepts & Architecture
-- **Domain**: AI Reasoning & Complex Problem Solving
-- **Core Technology**: Reinforcement Learning (RLAIF / GRPO), Test-Time Compute Scaling, Hidden Chain-of-Thought (CoT) Thinking Tokens, Process Reward Models (PRMs).
-- **Industry Standard**: Models that dynamically allocate extra computation time ("thinking") before producing a final answer, achieving SOTA accuracy on AIME 2024 Math, MATH-500, Codeforces, and GPQA.
+---
 
-## Detailed Analysis
-1. **Technical Foundation**: How FAQ optimizes test-time compute, error backtracking, self-correction, and logical verification.
-2. **Production Application**: Best practices for integrating reasoning models into automated code generators, mathematical engines, and multi-step analytical software.
-3. **Trade-offs**: Evaluating extended generation latency (10s - 60s thinking time) vs. output accuracy, and reasoning token cost vs. standard LLMs.
+## Technical Q&A
 
-## Best Practices
-- **Minimalist Prompting**: Do NOT instruct reasoning models to "think step by step" (they do this natively via reinforcement learning). State the problem clearly and concisely.
-- **Reasoning Effort Selection**: Adjust easoning_effort (low, medium, high) or max_completion_tokens based on task difficulty to control cost and latency.
-- **Handling Reasoning Tokens**: Parse <think> tags (DeepSeek-R1) or easoning_tokens metadata (OpenAI o1/o3-mini) separately from final output text.
+### **Q: Why do reasoning models take longer to generate answers?**
+**A**: Unlike standard models that immediately begin streaming final responses, reasoning models must first generate hundreds or thousands of internal reasoning tokens (chain-of-thought) to plan and self-correct. This adds significant Time-to-Last-Token (TTLT) latency.
 
-## Code / Configuration Example (DeepSeek-R1 / OpenAI o3-mini)
-`python
-import os
-from openai import OpenAI
+### **Q: Should I include "think step-by-step" in my prompts for reasoning models?**
+**A**: **No.** These models are pre-trained using reinforcement learning to generate reasoning traces automatically. Adding redundant prompting phrases can confuse the alignment layers, leading to repetitive or circular logical loops.
 
-# Initialize client for Reasoning Model Inference
-client = OpenAI(
-    base_url="https://api.deepseek.com",
-    api_key=os.environ.get("DEEPSEEK_API_KEY")
-)
+### **Q: Are intermediate thinking tokens billed?**
+**A**: **Yes.** All generated tokens (both the hidden reasoning chain and the final visible output text) are billed at the provider's standard output token rate.
 
-response = client.chat.completions.create(
-    model="deepseek-reasoner",
-    messages=[
-        {"role": "user", "content": "Solve the mathematical equation: Prove that there are infinitely many prime numbers using proof by contradiction."}
-    ]
-)
+### **Q: Can I stream reasoning traces in real-time?**
+**A**: **Yes.** Most API providers support streaming completions via Server-Sent Events (SSE). Chunks containing delta updates are returned inside the designated `reasoning_content` parameter before transitioning to standard completion content.
 
-# Access reasoning content (<think> tokens) and final answer
-reasoning_content = response.choices[0].message.reasoning_content
-final_answer = response.choices[0].message.content
-
-print("Thinking Process Snippet:")
-print(reasoning_content[:200])
-print("\nFinal Answer:")
-print(final_answer[:200])
-`
-
-## Related References
-- See [00-Overview](./00-Overview/README.md) and [08-Comparisons](./08-Comparisons/README.md) for decision matrices.
+### **Q: How do distilled reasoning models compare to native ones?**
+**A**: Distilled models (like Qwen-32B distilled from DeepSeek-R1) offer excellent logical reasoning on specific programming or math tasks at lower VRAM hosting footprints. However, they lack the general semantic flexibility and broad logical generalization capabilities of native, large-scale reasoning models.

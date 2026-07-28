@@ -1,55 +1,60 @@
-﻿---
-title: Gemini-2-5-Pro â€” Parameters
+---
+title: Gemini 2.5 Pro — Parameters
 service: 01-Language-Models
 model: Gemini-2-5-Pro
 section: 03-Models
 file: Parameters.md
 last_updated: 2026-07-28
-tags: [language-models, gemini-2-5-pro, parameters]
+tags: [language-models, gemini-2-5-pro, parameters, config]
 author: Antigravity AI Knowledge Engine
 ---
 
-# Gemini-2-5-Pro â€” Parameters
+# Gemini 2.5 Pro — API Parameters Reference
 
-## Model Specification: Gemini-2-5-Pro
-- **Model Name**: Gemini-2-5-Pro
-- **Primary Developer / Provider**: SOTA AI Provider
-- **Model Family**: Large Language Model Series
-- **Architecture**: Decoder-Only Transformer / Mixture-of-Experts (MoE)
-- **Context Window**: 128,000 to 2,000,000 tokens
-- **API Availability**: Official REST API, Python SDK, Cloud Ecosystems
+An overview of runtime configuration keys, safety structures, and search grounding configurations accepted by the Gemini API endpoints.
 
-## Parameters Detailed Breakdown
+---
 
-### Key Specifications & Highlights
-- **Reasoning & Instruction Following**: SOTA benchmark scores.
-- **Multilingual Support**: High precision across 50+ natural languages.
-- **Tool Use & Function Calling**: Native JSON schema enforcement.
+## 1. Generation Parameters
 
-### Technical Performance Analysis
-1. **Strengths**: Exceptional reasoning, low latency, robust developer tooling.
-2. **Weaknesses**: Token pricing for high-volume enterprise ingestion.
-3. **Best Use Cases**: Enterprise RAG, agentic workflows, customer service, automated code writing.
+These configurations control output generation and token boundaries:
 
-## Code Example (Gemini-2-5-Pro API Request)
-`python
-import os
-from openai import OpenAI
+| Parameter Name | Data Type | Default Value | Acceptable Range | Description |
+| :--- | :--- | :--- | :--- | :--- |
+| **`temperature`** | `float` | `1.0` | `0.0` to `2.0` | Controls randomness. Lower values enforce factual deterministic outputs. |
+| **`top_p`** | `float` | `0.95` | `0.0` to `1.0` | Cumulative probability token pruning. |
+| **`top_k`** | `integer` | *Null* | $\ge 1$ | Restricts candidates to the top $k$ tokens. |
+| **`max_output_tokens`**| `integer` | *Null* | Up to `8,192` | Sets the maximum length limit on generated output. |
+| **`candidate_count`** | `integer` | `1` | `1` | Number of alternative response generations to return (currently locked to 1). |
 
-client = OpenAI(api_key=os.environ.get("API_KEY"))
+---
 
-response = client.chat.completions.create(
-    model="gemini-2-5-pro",
-    messages=[
-        {"role": "system", "content": "You are a helpful AI assistant."},
-        {"role": "user", "content": "Provide a technical summary of Gemini-2-5-Pro capabilities."}
-    ],
-    temperature=0.7,
-    max_tokens=1000
-)
+## 2. Safety Settings (`safety_settings`)
 
-print(response.choices[0].message.content)
-`
+Google enforces strict content filters that developers can customize by specifying threshold blocks:
 
-## Related Models & Alternatives
-- See [08-Comparisons](../08-Comparisons/Decision-Matrix.md) for side-by-side performance benchmarks.
+* **Categories Evaluated**:
+  * `HARM_CATEGORY_HATE_SPEECH`
+  * `HARM_CATEGORY_HARASSMENT`
+  * `HARM_CATEGORY_SEXUALLY_EXPLICIT`
+  * `HARM_CATEGORY_DANGEROUS_CONTENT`
+* **Block Threshold Options**:
+  * `BLOCK_NONE`: Turn off safety filters (available for Vertex AI and paid Studio tiers).
+  * `BLOCK_LOW_AND_ABOVE`: Filter out content with low probability of harm.
+  * `BLOCK_MEDIUM_AND_ABOVE` (Default): Filter out medium to high probability harm.
+  * `BLOCK_ONLY_HIGH`: Only block high probability harm.
+
+---
+
+## 3. Search Grounding Configuration
+
+To ground responses in real-time Google Search results, pass the `tools` array:
+
+```json
+"tools": [
+  {
+    "google_search": {}
+  }
+]
+```
+This activates Google's search retrieval pipeline, grounding the model's response and returning citations in the metadata.

@@ -1,55 +1,40 @@
-﻿---
-title: Claude-3-7-Sonnet â€” Limitations
+---
+title: Claude 3.7 Sonnet — Limitations
 service: 01-Language-Models
 model: Claude-3-7-Sonnet
 section: 03-Models
 file: Limitations.md
 last_updated: 2026-07-28
-tags: [language-models, claude-3-7-sonnet, limitations]
+tags: [language-models, claude-3-7-sonnet, limitations, safety]
 author: Antigravity AI Knowledge Engine
 ---
 
-# Claude-3-7-Sonnet â€” Limitations
+# Claude 3.7 Sonnet — Technical Limitations & Safety Guardrails
 
-## Model Specification: Claude-3-7-Sonnet
-- **Model Name**: Claude-3-7-Sonnet
-- **Primary Developer / Provider**: SOTA AI Provider
-- **Model Family**: Large Language Model Series
-- **Architecture**: Decoder-Only Transformer / Mixture-of-Experts (MoE)
-- **Context Window**: 128,000 to 2,000,000 tokens
-- **API Availability**: Official REST API, Python SDK, Cloud Ecosystems
+A guide mapping the operational limits, latency trade-offs, and alignment parameters of Claude 3.7 Sonnet.
 
-## Limitations Detailed Breakdown
+---
 
-### Key Specifications & Highlights
-- **Reasoning & Instruction Following**: SOTA benchmark scores.
-- **Multilingual Support**: High precision across 50+ natural languages.
-- **Tool Use & Function Calling**: Native JSON schema enforcement.
+## 1. Core Technical Limitations
 
-### Technical Performance Analysis
-1. **Strengths**: Exceptional reasoning, low latency, robust developer tooling.
-2. **Weaknesses**: Token pricing for high-volume enterprise ingestion.
-3. **Best Use Cases**: Enterprise RAG, agentic workflows, customer service, automated code writing.
+* **Knowledge Cutoff**: The model's static training dataset contains information up to **October 2024**.
+* **Reasoning Latency Trade-Off**: Running the model in Thinking Mode increases Time-to-First-Token (TTFT) and overall generation latency, as the model must write out hundreds or thousands of internal thinking tokens before generating the final response.
+* **Computer Use Limitations**: When using GUI automation tools:
+  * Struggles with highly dynamic visual frames (such as video playback or fast-scrolling pages).
+  * Struggles with complex drag-and-drop actions or multi-key shortcut combinations.
+  * Capturing visual frames at high frequencies consumes significant API token quotas.
+* **Math / Code Compilation Slips**: While highly capable, the model can still introduce logical compilation errors or math calculations slips in deep reasoning paths when the thinking budget is set too low.
 
-## Code Example (Claude-3-7-Sonnet API Request)
-`python
-import os
-from openai import OpenAI
+---
 
-client = OpenAI(api_key=os.environ.get("API_KEY"))
+## 2. API Quotas & Token Caps
 
-response = client.chat.completions.create(
-    model="claude-3-7-sonnet",
-    messages=[
-        {"role": "system", "content": "You are a helpful AI assistant."},
-        {"role": "user", "content": "Provide a technical summary of Claude-3-7-Sonnet capabilities."}
-    ],
-    temperature=0.7,
-    max_tokens=1000
-)
+* **Max Output Limits**: Standard text completions are strictly capped at **8,192 tokens**. This limit is extended to **16,384 tokens** when `thinking` is enabled (accommodating the combined thinking trace and visible output).
+* **Concurrent Caching Limits**: Developers can only set a maximum of **4 cache breakpoints** in a single API request, limiting how granularly they can divide prompt caching segments.
 
-print(response.choices[0].message.content)
-`
+---
 
-## Related Models & Alternatives
-- See [08-Comparisons](../08-Comparisons/Decision-Matrix.md) for side-by-side performance benchmarks.
+## 3. Alignment Refusals & Safety Guardrails
+
+* **Strict Safety Boundaries**: Anthropic aligns models using Constitutional AI. If user inputs touch on prohibited categories (e.g., self-harm, cyberattacks, malware generation, hate speech), the model returns a standardized refusal message.
+* **Over-Refusal Behavior**: In some contexts, the model's safety filters exhibit "over-refusal," rejecting benign queries that share vocabulary with sensitive topics (e.g., refusing to analyze a secure codebase because it contains functions named `kill` or `attack`).

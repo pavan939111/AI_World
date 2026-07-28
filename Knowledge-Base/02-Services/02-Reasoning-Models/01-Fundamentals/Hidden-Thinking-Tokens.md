@@ -1,60 +1,42 @@
-﻿---
-title: Reasoning Models â€” Hidden-Thinking-Tokens
+---
+title: Reasoning Models — Hidden Thinking Tokens
 service: 02-Reasoning-Models
 section: 01-Fundamentals
 file: Hidden-Thinking-Tokens.md
 last_updated: 2026-07-28
-tags: [reasoning-models, deepseek-r1, o1, cot, 01-fundamentals, hidden-thinking-tokens]
+tags: [reasoning-models, thinking-tokens, api, latency, kv-cache]
 author: Antigravity AI Knowledge Engine
 ---
 
-# Hidden-Thinking-Tokens
+# Hidden Thinking Tokens
 
-## Executive Summary
-Detailed technical breakdown of **Hidden-Thinking-Tokens** within the **01-Fundamentals** domain of AI Reasoning Models (Chain-of-Thought / Test-Time Compute Scaling).
+**Thinking Tokens** (or reasoning tokens) are intermediate outputs generated autoregressively by reasoning models to formulate their step-by-step chain of thought. Unlike standard output text, these tokens are typically hidden in the final client interfaces, serving as the model's internal scratchpad.
 
-## Key Concepts & Architecture
-- **Domain**: AI Reasoning & Complex Problem Solving
-- **Core Technology**: Reinforcement Learning (RLAIF / GRPO), Test-Time Compute Scaling, Hidden Chain-of-Thought (CoT) Thinking Tokens, Process Reward Models (PRMs).
-- **Industry Standard**: Models that dynamically allocate extra computation time ("thinking") before producing a final answer, achieving SOTA accuracy on AIME 2024 Math, MATH-500, Codeforces, and GPQA.
+---
 
-## Detailed Analysis
-1. **Technical Foundation**: How Hidden-Thinking-Tokens optimizes test-time compute, error backtracking, self-correction, and logical verification.
-2. **Production Application**: Best practices for integrating reasoning models into automated code generators, mathematical engines, and multi-step analytical software.
-3. **Trade-offs**: Evaluating extended generation latency (10s - 60s thinking time) vs. output accuracy, and reasoning token cost vs. standard LLMs.
+## 1. Generation Mechanics
 
-## Best Practices
-- **Minimalist Prompting**: Do NOT instruct reasoning models to "think step by step" (they do this natively via reinforcement learning). State the problem clearly and concisely.
-- **Reasoning Effort Selection**: Adjust easoning_effort (low, medium, high) or max_completion_tokens based on task difficulty to control cost and latency.
-- **Handling Reasoning Tokens**: Parse <think> tags (DeepSeek-R1) or easoning_tokens metadata (OpenAI o1/o3-mini) separately from final output text.
+During inference, the model runs a continuous token prediction loop:
 
-## Code / Configuration Example (DeepSeek-R1 / OpenAI o3-mini)
-`python
-import os
-from openai import OpenAI
+1. **Trigger Reasoning**: Upon receiving the user prompt, the model outputs start-thinking markers (e.g. `<think>` or proprietary API states).
+2. **Autoregressive CoT Generation**: The model predicts intermediate reasoning tokens. Each predicted token is fed back into the context window, guiding the next reasoning step.
+3. **Trigger Transition**: Once the model's reasoning logic satisfies internal termination criteria, it outputs an end-thinking marker (e.g. `</think>`) and begins generating the final visible completion text.
 
-# Initialize client for Reasoning Model Inference
-client = OpenAI(
-    base_url="https://api.deepseek.com",
-    api_key=os.environ.get("DEEPSEEK_API_KEY")
-)
+---
 
-response = client.chat.completions.create(
-    model="deepseek-reasoner",
-    messages=[
-        {"role": "user", "content": "Solve the mathematical equation: Prove that there are infinitely many prime numbers using proof by contradiction."}
-    ]
-)
+## 2. KV Cache & Context Window Constraints
 
-# Access reasoning content (<think> tokens) and final answer
-reasoning_content = response.choices[0].message.reasoning_content
-final_answer = response.choices[0].message.content
+> [!IMPORTANT]
+> **Thinking tokens occupy active space in the context window.**
+> Generating 4,000 thinking tokens consumes 4,000 positions of the context window and populates the KV cache. This has two major production implications:
+> * **Context Size Degradation**: In multi-turn chat dialogues, large reasoning traces can quickly exhaust context windows (e.g. 128k limit), truncating early messages.
+> * **Time-to-Last-Token Latency**: Since the model must generate these tokens before outputting the final answer, each thinking token adds to the overall request generation duration.
 
-print("Thinking Process Snippet:")
-print(reasoning_content[:200])
-print("\nFinal Answer:")
-print(final_answer[:200])
-`
+---
 
-## Related References
-- See [00-Overview](./00-Overview/README.md) and [08-Comparisons](./08-Comparisons/README.md) for decision matrices.
+## 3. Billing & API Architectures
+
+* **Equal Billing Rates**: Providers bill thinking tokens at standard output token rates, as they consume equivalent GPU computation cycles during generation.
+* **Separated API Structures**:
+  * **OpenAI (o1/o3-mini)**: Replaces thinking traces with `reasoning_tokens` integer metadata counts. Traces are hidden by default to prevent safety jailbreaks or intellectual property extraction.
+  * **DeepSeek (R1)**: Returns the raw text of the thinking trace inside the `reasoning_content` parameter in chat completions, allowing developers to audit or display the reasoning path.

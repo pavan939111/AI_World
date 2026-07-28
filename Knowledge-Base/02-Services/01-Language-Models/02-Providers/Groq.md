@@ -1,52 +1,67 @@
-﻿---
-title: Language Models â€” Groq
+---
+title: Language Models — Groq
 service: 01-Language-Models
 section: 02-Providers
 file: Groq.md
 last_updated: 2026-07-28
-tags: [language-models, llm, 02-providers, groq]
+tags: [language-models, llm, providers, groq, lpu]
 author: Antigravity AI Knowledge Engine
 ---
 
-# Groq
+# Groq Provider Profile
 
-## Executive Summary
-Detailed technical breakdown of **Groq** within the **02-Providers** domain of Large Language Models (LLMs).
+**Groq** is a specialized hardware and cloud platform company that focuses on ultra-low-latency inference serving of open-weights Large Language Models. Rather than relying on standard graphics processors (GPUs), Groq designed a custom chip called the **Language Processing Unit (LPU)**.
 
-## Key Concepts & Architecture
-- **Domain**: Large Language Models & Natural Language Processing
-- **Core Technology**: Decoder-Only Transformers, Mixture-of-Experts (MoE), Attention Mechanisms (FlashAttention-3, RoPE)
-- **Industry Standard**: Modern LLM pipelines serving token completions with low Time-to-First-Token (TTFT) and high throughput (tok/s).
+---
 
-## Detailed Analysis
-1. **Technical Foundation**: How Groq optimizes context retrieval, reasoning depth, instruction following, and output generation.
-2. **Production Application**: Best practices for integrating Groq into enterprise applications.
-3. **Trade-offs**: Evaluating context window size vs. processing latency, API token pricing vs. open-weights self-hosting.
+## 1. Core Platform Capabilities
 
-## Best Practices
-- Benchmark using standardized evaluation frameworks (MMLU, GPQA, Chatbot Arena).
-- Configure temperature (.2 - 0.7$) based on output requirements (factual vs creative).
-- Utilize prompt caching for repeated long-context system prompts to reduce cost by up to 50%.
+Groq does not train custom foundation models; instead, it compiles and hosts popular open-weights models, offering generation speeds:
 
-## Code / Configuration Example
-`python
+* **Supported Model Catalog**:
+  * **Llama 3.3 (70B)** and **Llama 3.1 (8B)**.
+  * **DeepSeek-R1** and **DeepSeek-V3**.
+  * **Mixtral 8x7B** (sparse MoE).
+  * **Gemma 2 (9B / 27B)**.
+* **Speed Performance**: Exceeds GPU serving speeds. Groq commonly delivers **300 to 800+ Tokens Per Second (TPS)** depending on the model size, with Time-to-First-Token (TTFT) latency under 50 milliseconds.
+
+---
+
+## 2. Hardware Architecture (LPU vs. GPU)
+
+Groq's performance gains stem from their unique chip design:
+
+* **SRAM vs. HBM**: Modern GPUs use High Bandwidth Memory (HBM) which acts as a cache bottleneck during text generation. Groq LPUs bypass HBM entirely and use **Static Random-Access Memory (SRAM)** distributed directly across the chip.
+* **Memory Bandwidth**: SRAM access is orders of magnitude faster than HBM, eliminating the memory bandwidth constraint of autoregressive generation.
+* **Deterministic Execution**: The LPU has no dynamic instruction cache, branch predictors, or hardware schedulers. Execution paths and timing are completely controlled by the compiler at compile-time, ensuring deterministic execution time.
+* **Scale Limitation**: SRAM is significantly more expensive and less dense than HBM. A single LPU only holds ~230MB of memory. To host a 70B parameter model, Groq must link hundreds of LPU chips together in a large network array, which increases hardware cost and limits maximum context windows (usually capped at 8k to 32k).
+
+---
+
+## 3. Integration Standards
+
+Groq provides an OpenAI-compatible API interface, allowing developers to switch their existing OpenAI pipelines to Groq's low-latency servers by changing the client configuration.
+
+### Integration Example (Python SDK)
+```python
 import os
 from openai import OpenAI
 
-client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+# Initialize the OpenAI client pointing to Groq's endpoint
+client = OpenAI(
+    base_url="https://api.groq.com/openai/v1",
+    api_key=os.environ.get("GROQ_API_KEY")
+)
 
 response = client.chat.completions.create(
-    model="gpt-4o",
+    model="llama-3.3-70b-versatile",
     messages=[
-        {"role": "system", "content": "You are an expert AI software architect."},
-        {"role": "user", "content": "Explain Groq in the context of production LLM deployment."}
+        {"role": "user", "content": "Analyze this code for race conditions."}
     ],
-    temperature=0.3,
-    max_tokens=1000
+    temperature=0.2
 )
 
 print(response.choices[0].message.content)
-`
+```
 
-## Related References
-- See [00-Overview](./00-Overview/README.md) and [08-Comparisons](./08-Comparisons/README.md) for decision matrices.
+* **Use Case Fit**: Groq is ideal for real-time applications such as interactive voice agents, conversational autocomplete, agentic tool-use loops, and real-time structured data extraction where generation speed is critical.

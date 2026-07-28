@@ -1,4 +1,4 @@
-﻿---
+---
 title: Language Models â€” 03-Models Catalog
 service: 01-Language-Models
 category: 03-Models
@@ -9,8 +9,7 @@ author: Antigravity AI Knowledge Engine
 
 # Language Models â€” 03-Models
 
-## Overview
-Comprehensive model-by-model catalog for all major Large Language Models.
+Comprehensive model-by-model specification catalog, detailing capabilities, API schemas, execution parameters, pricing metrics, limitations, prompting guides, and concrete code examples for each flagship Large Language Model (LLM).
 
 ## Model Catalog
 - [GPT-4o](./GPT-4o/Overview.md)

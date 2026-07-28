@@ -1,55 +1,54 @@
-﻿---
-title: Llama-3-3-70B â€” Overview
+---
+title: Llama 3.3 70B — Overview
 service: 01-Language-Models
 model: Llama-3-3-70B
 section: 03-Models
 file: Overview.md
 last_updated: 2026-07-28
-tags: [language-models, llama-3-3-70b, overview]
+tags: [language-models, llama-3-3-70b, overview, specs]
 author: Antigravity AI Knowledge Engine
 ---
 
-# Llama-3-3-70B â€” Overview
+# Llama 3.3 70B — Technical Overview
 
-## Model Specification: Llama-3-3-70B
-- **Model Name**: Llama-3-3-70B
-- **Primary Developer / Provider**: SOTA AI Provider
-- **Model Family**: Large Language Model Series
-- **Architecture**: Decoder-Only Transformer / Mixture-of-Experts (MoE)
-- **Context Window**: 128,000 to 2,000,000 tokens
-- **API Availability**: Official REST API, Python SDK, Cloud Ecosystems
+**Llama 3.3 70B** is Meta's flagship open-weights Large Language Model. It is optimized for high-performance instruction following, structured text generation, and reasoning tasks, offering a cost-effective alternative to closed commercial APIs for self-hosted enterprise architectures.
 
-## Overview Detailed Breakdown
+---
 
-### Key Specifications & Highlights
-- **Reasoning & Instruction Following**: SOTA benchmark scores.
-- **Multilingual Support**: High precision across 50+ natural languages.
-- **Tool Use & Function Calling**: Native JSON schema enforcement.
+## 1. Technical Specifications & Specs
 
-### Technical Performance Analysis
-1. **Strengths**: Exceptional reasoning, low latency, robust developer tooling.
-2. **Weaknesses**: Token pricing for high-volume enterprise ingestion.
-3. **Best Use Cases**: Enterprise RAG, agentic workflows, customer service, automated code writing.
+| Metric | Specification | Details |
+| :--- | :--- | :--- |
+| **Developer / Provider** | Meta AI | Released December 2024. |
+| **Model Type** | Open-Weights Text Generation | Distributed under the Llama 3 Community License. |
+| **Architecture** | Decoder-Only Transformer | Features Grouped-Query Attention (GQA) and RoPE. |
+| **Parameter Count** | 70 Billion (Dense) | Balanced size for multi-GPU workstation execution. |
+| **Context Window** | 128,000 tokens | Expansive inputs for long text analysis. |
+| **Max Output Tokens** | 8,192 tokens | Supported output sequence length. |
+| **Vocabulary Size** | 128,256 tokens | Tiktoken-based custom BPE tokenizer. |
 
-## Code Example (Llama-3-3-70B API Request)
-`python
-import os
-from openai import OpenAI
+---
 
-client = OpenAI(api_key=os.environ.get("API_KEY"))
+## 2. Core Architectural Highlights
 
-response = client.chat.completions.create(
-    model="llama-3-3-70b",
+* **Grouped-Query Attention (GQA)**: Rather than assigning a Key and Value head to each Query head, Llama 3.3 70B shares Key/Value heads across groups of 8 Query heads. This reduces the KV Cache memory footprint during generation, increasing serving throughput and allowing larger batch sizes.
+* **Permissive Open-Weights License**: Available for both research and commercial use for products serving up to 700M monthly active users, making it highly customizable via local fine-tuning.
+* **Instruction Following Alignment**: Aligned using extensive SFT and preference tuning (PPO/DPO), demonstrating high compliance with formatting guidelines and structured outputs (such as JSON rendering).
+
+---
+
+## 3. Basic Integration Example
+
+### Python SDK Request (Local Serving via Ollama)
+```python
+import ollama
+
+response = ollama.chat(
+    model="llama3.3",
     messages=[
-        {"role": "system", "content": "You are a helpful AI assistant."},
-        {"role": "user", "content": "Provide a technical summary of Llama-3-3-70B capabilities."}
-    ],
-    temperature=0.7,
-    max_tokens=1000
+        {"role": "user", "content": "Explain the latency benefits of Grouped-Query Attention."}
+    ]
 )
 
-print(response.choices[0].message.content)
-`
-
-## Related Models & Alternatives
-- See [08-Comparisons](../08-Comparisons/Decision-Matrix.md) for side-by-side performance benchmarks.
+print(response["message"]["content"])
+```

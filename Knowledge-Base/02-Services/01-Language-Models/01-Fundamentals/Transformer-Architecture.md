@@ -1,52 +1,95 @@
-﻿---
-title: Language Models â€” Transformer-Architecture
+---
+title: Language Models — Transformer Architecture
 service: 01-Language-Models
 section: 01-Fundamentals
 file: Transformer-Architecture.md
 last_updated: 2026-07-28
-tags: [language-models, llm, 01-fundamentals, transformer-architecture]
+tags: [language-models, llm, transformer, architecture]
 author: Antigravity AI Knowledge Engine
 ---
 
-# Transformer-Architecture
+# Transformer Architecture
 
-## Executive Summary
-Detailed technical breakdown of **Transformer-Architecture** within the **01-Fundamentals** domain of Large Language Models (LLMs).
+The **Transformer** (introduced by Vaswani et al. in 2017) is the core architecture powering almost all modern Large Language Models. By replacing sequential recurrence (RNNs/LSTMs) with a parallelized self-attention mechanism, the Transformer enabled models to capture dependencies across long contexts and train efficiently on massive datasets.
 
-## Key Concepts & Architecture
-- **Domain**: Large Language Models & Natural Language Processing
-- **Core Technology**: Decoder-Only Transformers, Mixture-of-Experts (MoE), Attention Mechanisms (FlashAttention-3, RoPE)
-- **Industry Standard**: Modern LLM pipelines serving token completions with low Time-to-First-Token (TTFT) and high throughput (tok/s).
+---
 
-## Detailed Analysis
-1. **Technical Foundation**: How Transformer-Architecture optimizes context retrieval, reasoning depth, instruction following, and output generation.
-2. **Production Application**: Best practices for integrating Transformer-Architecture into enterprise applications.
-3. **Trade-offs**: Evaluating context window size vs. processing latency, API token pricing vs. open-weights self-hosting.
+## 1. Architectural Styles
 
-## Best Practices
-- Benchmark using standardized evaluation frameworks (MMLU, GPQA, Chatbot Arena).
-- Configure temperature (.2 - 0.7$) based on output requirements (factual vs creative).
-- Utilize prompt caching for repeated long-context system prompts to reduce cost by up to 50%.
+Depending on how attention is masked, Transformers are divided into three primary configurations:
 
-## Code / Configuration Example
-`python
-import os
-from openai import OpenAI
+1. **Encoder-Only (Bidirectional)**:
+   * Processes the entire input sequence simultaneously (no masking).
+   * Generates contextual representations of tokens.
+   * *Examples*: BERT, RoBERTa.
+2. **Decoder-Only (Causal/Autoregressive)**:
+   * Masks future tokens using causal masking, allowing attention only to past and current tokens.
+   * Generates text token-by-token autoregressively.
+   * *Examples*: GPT-4o, Claude 3.7 Sonnet, Gemini 2.5, Llama 3.3.
+3. **Encoder-Decoder (Seq2Seq)**:
+   * A bidirectional encoder processes input, and a causal decoder generates output while attending to encoder states.
+   * *Examples*: T5, BART.
 
-client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+---
 
-response = client.chat.completions.create(
-    model="gpt-4o",
-    messages=[
-        {"role": "system", "content": "You are an expert AI software architect."},
-        {"role": "user", "content": "Explain Transformer-Architecture in the context of production LLM deployment."}
-    ],
-    temperature=0.3,
-    max_tokens=1000
-)
+## 2. Key Components of a Decoder-Only Layer
 
-print(response.choices[0].message.content)
-`
+A modern decoder-only Transformer model consists of a stack of $N$ identical layers. Each layer contains the following sub-components:
 
-## Related References
-- See [00-Overview](./00-Overview/README.md) and [08-Comparisons](./08-Comparisons/README.md) for decision matrices.
+```
+Input Token IDs
+      │
+      ▼
+[Input Embeddings + Positional Embeddings]
+      │
+      ├─────────────────────────┐
+      ▼ (Residual)              │
+[Layer Normalization / RMSNorm] │
+      │                         │
+      ▼                         │
+[Causal Self-Attention]         │
+      │                         │
+      ▼                         │
+[Dropout / Projection]          │
+      │                         │
+      ▼                         │
+      + <───────────────────────┘ (Residual Addition)
+      │
+      ├─────────────────────────┐
+      ▼ (Residual)              │
+[Layer Normalization / RMSNorm] │
+      │                         │
+      ▼                         │
+[Feed-Forward Network (SwiGLU)] │
+      │                         │
+      ▼                         │
+[Dropout / Projection]          │
+      │                         │
+      ▼                         │
+      + <───────────────────────┘ (Residual Addition)
+      │
+      ▼
+To Next Transformer Layer (or Output Head)
+```
+
+### A. Input Embeddings & Positional Embeddings
+Because Transformers process tokens in parallel, they have no built-in sense of order.
+* **Input Embeddings**: Map token IDs to continuous vectors of dimension $d_{\text{model}}$.
+* **Positional Embeddings**: Vectors containing position information are added to or injected into the token embeddings. Modern models use relative embeddings (such as Rotary Position Embeddings - RoPE) rather than Vaswani's absolute sinusoidal embeddings.
+
+### B. Layer Normalization & RMSNorm
+Normalization stabilizes training by keeping activations at a consistent scale.
+* **Pre-LN vs. Post-LN**: Original Transformers used Post-LN (normalizing after residual additions). Modern LLMs use Pre-LN (normalizing before entering attention/FFN blocks), which improves training stability.
+* **RMSNorm (Root Mean Square Normalization)**: Many modern models (e.g., Llama) replace standard LayerNorm with RMSNorm. It scales inputs based on their root mean square, reducing computation by omitting the mean calculation step:
+  $$\text{RMSNorm}(x_i) = \frac{x_i}{\sqrt{\frac{1}{d} \sum_{j=1}^d x_j^2 + \epsilon}} \gamma_i$$
+
+### C. Multi-Head Causal Attention
+Allows tokens to selectively attend to other tokens in their history. Causal masking (setting future token attention weights to $-\infty$ before softmax) prevents the model from looking ahead.
+
+### D. Feed-Forward Networks & SwiGLU
+The output of the attention block is passed to a Feed-Forward Network (FFN) that operates on each token position independently.
+* **SwiGLU Activation**: Modern models replace standard ReLU or GELU activations with SwiGLU (Swish Gated Linear Unit). It multiplies two linear projections, one of which is gated with a Swish/SiLU function:
+  $$\text{SwiGLU}(x) = \left( xW_1 \cdot \text{swish}(xW_2) \right) W_3$$
+
+### E. Residual Connections
+Skip connections add the input of a sub-layer directly to its output ($x + \text{SubLayer}(x)$). This allows gradients to flow directly back through the network, preventing vanishing gradients in deep models.

@@ -1,55 +1,109 @@
-﻿---
-title: Mistral-Large-2 â€” Examples
+---
+title: Mistral-Large-2 — Code Examples
 service: 01-Language-Models
 model: Mistral-Large-2
 section: 03-Models
 file: Examples.md
 last_updated: 2026-07-28
-tags: [language-models, mistral-large-2, examples]
+tags: [language-models, mistral-large-2, examples, code, python, tools]
 author: Antigravity AI Knowledge Engine
 ---
 
-# Mistral-Large-2 â€” Examples
+# Mistral-Large-2 — Code Examples
 
-## Model Specification: Mistral-Large-2
-- **Model Name**: Mistral-Large-2
-- **Primary Developer / Provider**: SOTA AI Provider
-- **Model Family**: Large Language Model Series
-- **Architecture**: Decoder-Only Transformer / Mixture-of-Experts (MoE)
-- **Context Window**: 128,000 to 2,000,000 tokens
-- **API Availability**: Official REST API, Python SDK, Cloud Ecosystems
+Practical, executable Python examples demonstrating the official Mistral AI SDK and structured tool calling.
 
-## Examples Detailed Breakdown
+---
 
-### Key Specifications & Highlights
-- **Reasoning & Instruction Following**: SOTA benchmark scores.
-- **Multilingual Support**: High precision across 50+ natural languages.
-- **Tool Use & Function Calling**: Native JSON schema enforcement.
+## Example 1: Standard Completion via Mistral SDK
 
-### Technical Performance Analysis
-1. **Strengths**: Exceptional reasoning, low latency, robust developer tooling.
-2. **Weaknesses**: Token pricing for high-volume enterprise ingestion.
-3. **Best Use Cases**: Enterprise RAG, agentic workflows, customer service, automated code writing.
+This script queries the latest version of Mistral Large using the `mistralai` Python package (`pip install mistralai`).
 
-## Code Example (Mistral-Large-2 API Request)
-`python
+```python
 import os
-from openai import OpenAI
+from mistralai import Mistral
 
-client = OpenAI(api_key=os.environ.get("API_KEY"))
+# Initialize the client with API key
+client = Mistral(api_key=os.environ.get("MISTRAL_API_KEY"))
 
-response = client.chat.completions.create(
-    model="mistral-large-2",
+response = client.chat.complete(
+    model="mistral-large-latest",
     messages=[
-        {"role": "system", "content": "You are a helpful AI assistant."},
-        {"role": "user", "content": "Provide a technical summary of Mistral-Large-2 capabilities."}
+        {
+            "role": "user",
+            "content": "Verify the computational cost difference between self-attention and sliding window attention."
+        }
     ],
-    temperature=0.7,
-    max_tokens=1000
+    temperature=0.3,
+    max_tokens=512
 )
 
+print("Mistral Large Response:")
 print(response.choices[0].message.content)
-`
+```
 
-## Related Models & Alternatives
-- See [08-Comparisons](../08-Comparisons/Decision-Matrix.md) for side-by-side performance benchmarks.
+---
+
+## Example 2: Structured Tool (Function) Calling
+
+This script configures a tool schema to allow the model to query an external pricing calculator function.
+
+```python
+import os
+import json
+from mistralai import Mistral
+
+client = Mistral(api_key=os.environ.get("MISTRAL_API_KEY"))
+
+# Define the mock tool function details
+def get_gpu_hosting_price(gpu_name: str, quantity: int) -> str:
+    prices = {"A100": 2.20, "H100": 4.70}
+    unit_price = prices.get(gpu_name.upper(), 1.50)
+    return json.dumps({"gpu": gpu_name, "total_hourly_rate": unit_price * quantity})
+
+# Define the tool mapping schema
+tools = [
+    {
+        "type": "function",
+        "function": {
+            "name": "get_gpu_hosting_price",
+            "description": "Calculate the hourly VRAM server hosting cost.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "gpu_name": {
+                        "type": "string",
+                        "description": "The GPU model, e.g., A100 or H100."
+                    },
+                    "quantity": {
+                        "type": "integer",
+                        "description": "The number of GPUs requested."
+                    }
+                },
+                "required": ["gpu_name", "quantity"]
+            }
+        }
+    }
+]
+
+response = client.chat.complete(
+    model="mistral-large-latest",
+    messages=[
+        {"role": "user", "content": "How much does it cost hourly to run 4x A100 GPUs?"}
+    ],
+    tools=tools,
+    tool_choice="any"  # Force the model to choose a tool call
+)
+
+tool_call = response.choices[0].message.tool_calls[0]
+function_name = tool_call.function.name
+function_args = json.loads(tool_call.function.arguments)
+
+print(f"Model chose tool: {function_name}")
+print(f"Arguments parsed: {function_args}")
+
+# Simulate execution of local function
+if function_name == "get_gpu_hosting_price":
+    result = get_gpu_hosting_price(**function_args)
+    print(f"Function output: {result}")
+```

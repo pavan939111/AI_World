@@ -1,55 +1,42 @@
-﻿---
-title: Qwen-2-5-72B â€” Capabilities
+---
+title: Qwen 2.5 72B — Capabilities
 service: 01-Language-Models
 model: Qwen-2-5-72B
 section: 03-Models
 file: Capabilities.md
 last_updated: 2026-07-28
-tags: [language-models, qwen-2-5-72b, capabilities]
+tags: [language-models, qwen-2-5-72b, capabilities, benchmarks]
 author: Antigravity AI Knowledge Engine
 ---
 
-# Qwen-2-5-72B â€” Capabilities
+# Qwen 2.5 72B — Capabilities
 
-## Model Specification: Qwen-2-5-72B
-- **Model Name**: Qwen-2-5-72B
-- **Primary Developer / Provider**: SOTA AI Provider
-- **Model Family**: Large Language Model Series
-- **Architecture**: Decoder-Only Transformer / Mixture-of-Experts (MoE)
-- **Context Window**: 128,000 to 2,000,000 tokens
-- **API Availability**: Official REST API, Python SDK, Cloud Ecosystems
+Qwen 2.5 72B features advanced multilingual parsing, competitive programming skills, and strong logical reasoning capabilities.
 
-## Capabilities Detailed Breakdown
+---
 
-### Key Specifications & Highlights
-- **Reasoning & Instruction Following**: SOTA benchmark scores.
-- **Multilingual Support**: High precision across 50+ natural languages.
-- **Tool Use & Function Calling**: Native JSON schema enforcement.
+## 1. Native CJK & Multilingual Parity
 
-### Technical Performance Analysis
-1. **Strengths**: Exceptional reasoning, low latency, robust developer tooling.
-2. **Weaknesses**: Token pricing for high-volume enterprise ingestion.
-3. **Best Use Cases**: Enterprise RAG, agentic workflows, customer service, automated code writing.
+* **High-Accuracy Translation**: Trained on extensive corpora across 30+ natural languages, demonstrating exceptional semantic parsing for Chinese, Japanese, Korean, Arabic, and Western languages.
+* **Low Token Overhead**: Its large vocabulary size reduces token splits for non-English scripts, allowing developers to process larger multilingual document blocks within the same context window compared to standard tokenizers.
 
-## Code Example (Qwen-2-5-72B API Request)
-`python
-import os
-from openai import OpenAI
+---
 
-client = OpenAI(api_key=os.environ.get("API_KEY"))
+## 2. Technical Capabilities
 
-response = client.chat.completions.create(
-    model="qwen-2-5-72b",
-    messages=[
-        {"role": "system", "content": "You are a helpful AI assistant."},
-        {"role": "user", "content": "Provide a technical summary of Qwen-2-5-72B capabilities."}
-    ],
-    temperature=0.7,
-    max_tokens=1000
-)
+* **Software Synthesis & Coding**: Achieves strong performance in code generation, structural debugging, and parsing complex API parameters schemas.
+* **Math Logic**: Displays solid arithmetic planning and competitive high-school mathematics reasoning.
 
-print(response.choices[0].message.content)
-`
+---
 
-## Related Models & Alternatives
-- See [08-Comparisons](../08-Comparisons/Decision-Matrix.md) for side-by-side performance benchmarks.
+## 3. Cognitive & Technical Benchmarks
+
+Qwen 2.5 72B ranks competitive across standard technical evaluations:
+
+| Evaluation Metric | Benchmark Score | Target Area Measured |
+| :--- | :--- | :--- |
+| **MMLU** | 85.0% | General multitask academic knowledge. |
+| **MATH** | 80.0% | Multi-step mathematical reasoning. |
+| **GPQA** | 41.2% | PhD-level science logic queries. |
+| **HumanEval** | 86.6% | Python coding syntax generation. |
+| **LiveBench** | 59.4% | Dynamic logical evaluation metrics. |

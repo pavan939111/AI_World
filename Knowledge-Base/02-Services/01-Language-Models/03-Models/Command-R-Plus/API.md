@@ -1,55 +1,86 @@
-﻿---
-title: Command-R-Plus â€” API
+---
+title: Command R+ — API Reference
 service: 01-Language-Models
 model: Command-R-Plus
 section: 03-Models
 file: API.md
 last_updated: 2026-07-28
-tags: [language-models, command-r-plus, api]
+tags: [language-models, command-r-plus, api, endpoint]
 author: Antigravity AI Knowledge Engine
 ---
 
-# Command-R-Plus â€” API
+# Command R+ — API Reference
 
-## Model Specification: Command-R-Plus
-- **Model Name**: Command-R-Plus
-- **Primary Developer / Provider**: SOTA AI Provider
-- **Model Family**: Large Language Model Series
-- **Architecture**: Decoder-Only Transformer / Mixture-of-Experts (MoE)
-- **Context Window**: 128,000 to 2,000,000 tokens
-- **API Availability**: Official REST API, Python SDK, Cloud Ecosystems
+REST API endpoints, JSON request bodies, and grounded citation response schemas for Command R+.
 
-## API Detailed Breakdown
+---
 
-### Key Specifications & Highlights
-- **Reasoning & Instruction Following**: SOTA benchmark scores.
-- **Multilingual Support**: High precision across 50+ natural languages.
-- **Tool Use & Function Calling**: Native JSON schema enforcement.
+## 1. Chat completions Endpoint (Cohere Native)
 
-### Technical Performance Analysis
-1. **Strengths**: Exceptional reasoning, low latency, robust developer tooling.
-2. **Weaknesses**: Token pricing for high-volume enterprise ingestion.
-3. **Best Use Cases**: Enterprise RAG, agentic workflows, customer service, automated code writing.
+Unlike OpenAI endpoints, Cohere's native API exposes the `/v1/chat` route to manage multi-lingual conversations and grounding parameters:
 
-## Code Example (Command-R-Plus API Request)
-`python
-import os
-from openai import OpenAI
+* **HTTP Method**: `POST`
+* **Endpoint URL**: `https://api.cohere.ai/v1/chat`
+* **Headers**:
+  * `Authorization`: `Bearer COHERE_API_KEY`
+  * `Content-Type`: `application/json`
 
-client = OpenAI(api_key=os.environ.get("API_KEY"))
+### Request Payload Example (with In-Context Documents)
+```json
+{
+  "model": "command-r-plus",
+  "message": "What is the platform completions rate limit?",
+  "documents": [
+    {
+      "id": "doc_1",
+      "title": "API Rates",
+      "snippet": "The platform rate limit is 10,000 completions per hour."
+    }
+  ]
+}
+```
 
-response = client.chat.completions.create(
-    model="command-r-plus",
-    messages=[
-        {"role": "system", "content": "You are a helpful AI assistant."},
-        {"role": "user", "content": "Provide a technical summary of Command-R-Plus capabilities."}
-    ],
-    temperature=0.7,
-    max_tokens=1000
-)
+### Grounded Response Payload Structure
+The response includes a dedicated **`citations`** array, mapping generated text indexes back to the document source IDs:
 
-print(response.choices[0].message.content)
-`
+```json
+{
+  "text": "The platform completions rate limit is 10,000 requests hourly.",
+  "generation_id": "gen-...",
+  "citations": [
+    {
+      "start": 0,
+      "end": 62,
+      "text": "The platform completions rate limit is 10,000 requests hourly.",
+      "document_ids": [
+        "doc_1"
+      ]
+    }
+  ],
+  "documents": [
+    {
+      "id": "doc_1",
+      "title": "API Rates",
+      "snippet": "The platform rate limit is 10,000 completions per hour."
+    }
+  ],
+  "meta": {
+    "api_version": {
+      "version": "1"
+    },
+    "billed_tokens": {
+      "input_tokens": 35,
+      "output_tokens": 15
+    }
+  }
+}
+```
 
-## Related Models & Alternatives
-- See [08-Comparisons](../08-Comparisons/Decision-Matrix.md) for side-by-side performance benchmarks.
+---
+
+## 2. Server-Sent Events (SSE) Streaming
+
+Set `"stream": true` to receive real-time updates. The SSE data frames return chunk events mapping:
+
+* **Inference Events (`text-generation`)**: Stream incremental answer token updates.
+* **Metadata Events (`stream-end`)**: Returns the final compiled citation array and token count details.

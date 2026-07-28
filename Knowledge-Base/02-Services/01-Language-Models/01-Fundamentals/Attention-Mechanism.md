@@ -1,52 +1,85 @@
-﻿---
-title: Language Models â€” Attention-Mechanism
+---
+title: Language Models — Attention Mechanism
 service: 01-Language-Models
 section: 01-Fundamentals
 file: Attention-Mechanism.md
 last_updated: 2026-07-28
-tags: [language-models, llm, 01-fundamentals, attention-mechanism]
+tags: [language-models, llm, attention, self-attention]
 author: Antigravity AI Knowledge Engine
 ---
 
-# Attention-Mechanism
+# The Attention Mechanism
 
-## Executive Summary
-Detailed technical breakdown of **Attention-Mechanism** within the **01-Fundamentals** domain of Large Language Models (LLMs).
+The **Self-Attention Mechanism** is the operational core of the Transformer. It allows a model to weigh the relevance of different tokens in a sequence dynamically, capturing contextual relationships regardless of their distance.
 
-## Key Concepts & Architecture
-- **Domain**: Large Language Models & Natural Language Processing
-- **Core Technology**: Decoder-Only Transformers, Mixture-of-Experts (MoE), Attention Mechanisms (FlashAttention-3, RoPE)
-- **Industry Standard**: Modern LLM pipelines serving token completions with low Time-to-First-Token (TTFT) and high throughput (tok/s).
+---
 
-## Detailed Analysis
-1. **Technical Foundation**: How Attention-Mechanism optimizes context retrieval, reasoning depth, instruction following, and output generation.
-2. **Production Application**: Best practices for integrating Attention-Mechanism into enterprise applications.
-3. **Trade-offs**: Evaluating context window size vs. processing latency, API token pricing vs. open-weights self-hosting.
+## 1. Mathematical Formulation
 
-## Best Practices
-- Benchmark using standardized evaluation frameworks (MMLU, GPQA, Chatbot Arena).
-- Configure temperature (.2 - 0.7$) based on output requirements (factual vs creative).
-- Utilize prompt caching for repeated long-context system prompts to reduce cost by up to 50%.
+Self-attention maps an input representation into three vectors: **Queries ($Q$)**, **Keys ($K$)**, and **Values ($V$)**.
+* **Queries ($Q$)**: Represent what the current token is looking for.
+* **Keys ($K$)**: Represent what information the other tokens hold.
+* **Values ($V$)**: Represent the actual content of the tokens.
 
-## Code / Configuration Example
-`python
-import os
-from openai import OpenAI
+For a sequence of input embeddings $X$, the projection matrices $W_Q, W_K, W_V$ compute:
+$$Q = XW_Q, \quad K = XW_K, \quad V = XW_V$$
 
-client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+The attention weights are calculated using **Scaled Dot-Product Attention**:
 
-response = client.chat.completions.create(
-    model="gpt-4o",
-    messages=[
-        {"role": "system", "content": "You are an expert AI software architect."},
-        {"role": "user", "content": "Explain Attention-Mechanism in the context of production LLM deployment."}
-    ],
-    temperature=0.3,
-    max_tokens=1000
-)
+$$\text{Attention}(Q, K, V) = \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)V$$
 
-print(response.choices[0].message.content)
-`
+* **Dot-Product ($QK^T$)**: Computes similarity scores between query and key vectors.
+* **Scaling Factor ($1/\sqrt{d_k}$)**: Prevents dot-products from growing excessively large for high vector dimensions ($d_k$), which would push the Softmax function into regions with extremely small gradients.
+* **Softmax**: Converts scores into a probability distribution summing to 1.
+* **Multiplying by $V$**: Mixes the value vectors based on the attention weights.
 
-## Related References
-- See [00-Overview](./00-Overview/README.md) and [08-Comparisons](./08-Comparisons/README.md) for decision matrices.
+---
+
+## 2. Multi-Head Attention (MHA)
+
+Rather than performing attention once, **Multi-Head Attention (MHA)** splits the queries, keys, and values into $h$ subspaces. This allows the model to attend to information from different representation subspaces at different positions simultaneously.
+
+$$\text{MHA}(Q, K, V) = \text{Concat}(\text{head}_1, \dots, \text{head}_h)W^O$$
+$$\text{where} \quad \text{head}_i = \text{Attention}(QW_i^Q, KW_i^K, VW_i^V)$$
+
+---
+
+## 3. Attention Variants: MHA vs. MQA vs. GQA
+
+As models scaled, storing key-value (KV) states in memory during inference (KV cache) became a major performance bottleneck. This led to alternative attention configurations:
+
+| Attention Type | Description | Memory Footprint | Relative Throughput |
+| :--- | :--- | :--- | :--- |
+| **Multi-Head Attention (MHA)** | Each query head has its own key and value head. | High | Standard |
+| **Multi-Query Attention (MQA)** | All query heads share a single key head and a single value head. | Very Low | High |
+| **Grouped-Query Attention (GQA)** | Query heads are grouped, and each group shares one key and one value head. | Low (Balanced) | High |
+
+```
+   MHA (Multi-Head)            MQA (Multi-Query)            GQA (Grouped-Query)
+   
+  Q Q Q Q  K K K K  V V V V        Q Q Q Q  K  V            Q Q Q Q  K K  V V
+  │ │ │ │  │ │ │ │  │ │ │ │        │ │ │ │  │  │            ├───┤───┤  │ │  │ │
+  H1 H2 H3 H4 (KV Per Head)        All Share One KV          G1   G2  (Shared KV)
+```
+
+GQA (used in Llama 3 and Mistral) achieves a middle ground: it matches the performance quality of MHA while matching the high throughput and memory efficiency of MQA.
+
+---
+
+## 4. Causal Masking (Decoder-Only)
+
+In generative tasks, a token should not attend to subsequent tokens. This is enforced by applying a causal mask to the attention matrix before softmax. The mask sets all positions where $j > i$ (future tokens) to $-\infty$:
+
+$$M_{ij} = \begin{cases} 0 & j \le i \\ -\infty & j > i \end{cases}$$
+$$\text{Attention}(Q, K, V) = \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}} + M\right)V$$
+
+---
+
+## 5. FlashAttention
+
+Standard attention is bounded by memory transfers (it is memory-bandwidth bound). It reads $Q, K, V$ from High Bandwidth Memory (HBM) to GPU SRAM, computes attention weights, writes them back to HBM, and reads them again to multiply by $V$.
+
+**FlashAttention** (Dao et al.) restructures the attention computation by:
+* **Tiling**: Loading input blocks into fast SRAM.
+* **Recomputation**: Recomputing the attention matrix during the backward pass instead of storing it, avoiding large memory reads/writes.
+* **Speedup**: Achieves 2x to 4x execution speedups and scales memory linearly ($O(N)$) with sequence length instead of quadratically ($O(N^2)$).

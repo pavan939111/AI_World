@@ -1,55 +1,81 @@
-﻿---
-title: Command-R-Plus â€” Examples
+---
+title: Command R+ — Code Examples
 service: 01-Language-Models
 model: Command-R-Plus
 section: 03-Models
 file: Examples.md
 last_updated: 2026-07-28
-tags: [language-models, command-r-plus, examples]
+tags: [language-models, command-r-plus, examples, code, python, RAG]
 author: Antigravity AI Knowledge Engine
 ---
 
-# Command-R-Plus â€” Examples
+# Command R+ — Code Examples
 
-## Model Specification: Command-R-Plus
-- **Model Name**: Command-R-Plus
-- **Primary Developer / Provider**: SOTA AI Provider
-- **Model Family**: Large Language Model Series
-- **Architecture**: Decoder-Only Transformer / Mixture-of-Experts (MoE)
-- **Context Window**: 128,000 to 2,000,000 tokens
-- **API Availability**: Official REST API, Python SDK, Cloud Ecosystems
+Practical, executable Python examples demonstrating how to make standard chat requests and configure grounded RAG completions using the official `cohere` SDK (`pip install cohere`).
 
-## Examples Detailed Breakdown
+---
 
-### Key Specifications & Highlights
-- **Reasoning & Instruction Following**: SOTA benchmark scores.
-- **Multilingual Support**: High precision across 50+ natural languages.
-- **Tool Use & Function Calling**: Native JSON schema enforcement.
+## Example 1: Standard Chat Completion
 
-### Technical Performance Analysis
-1. **Strengths**: Exceptional reasoning, low latency, robust developer tooling.
-2. **Weaknesses**: Token pricing for high-volume enterprise ingestion.
-3. **Best Use Cases**: Enterprise RAG, agentic workflows, customer service, automated code writing.
+This script demonstrates a basic prompt call to Command R+.
 
-## Code Example (Command-R-Plus API Request)
-`python
+```python
 import os
-from openai import OpenAI
+import cohere
 
-client = OpenAI(api_key=os.environ.get("API_KEY"))
+# Initialize client using environment credentials
+co = cohere.Client(api_key=os.environ.get("COHERE_API_KEY"))
 
-response = client.chat.completions.create(
+response = co.chat(
     model="command-r-plus",
-    messages=[
-        {"role": "system", "content": "You are a helpful AI assistant."},
-        {"role": "user", "content": "Provide a technical summary of Command-R-Plus capabilities."}
-    ],
-    temperature=0.7,
-    max_tokens=1000
+    message="What are the main architectural features of the Command R+ model?",
+    temperature=0.3
 )
 
-print(response.choices[0].message.content)
-`
+print("Response text output:")
+print(response.text)
+```
 
-## Related Models & Alternatives
-- See [08-Comparisons](../08-Comparisons/Decision-Matrix.md) for side-by-side performance benchmarks.
+---
+
+## Example 2: In-Context RAG Query with Inline Citations
+
+This script passes document chunks to the completions engine, returning grounded answers containing mapped citation pointers.
+
+```python
+import os
+import cohere
+
+co = cohere.Client(api_key=os.environ.get("COHERE_API_KEY"))
+
+# Define document list payload
+documents = [
+    {
+        "id": "ref_1",
+        "title": "Quantum Computing Basics",
+        "snippet": "Qubits represent information using superposition states."
+    },
+    {
+        "id": "ref_2",
+        "title": "Quantum Coherence",
+        "snippet": "Maintaining state coherence requires keeping temperatures below 20 Millikelvin."
+    }
+]
+
+response = co.chat(
+    model="command-r-plus",
+    message="How do qubits represent data and what temperature is required to maintain coherence?",
+    documents=documents,
+    temperature=0.0  # Lock randomness to optimize citation lookup
+)
+
+print("--- Answer Text ---")
+print(response.text)
+
+print("\n--- Inline Citations ---")
+for citation in response.citations:
+    print(f"CITED TEXT: '{citation.text}'")
+    print(f"Indices: {citation.start} to {citation.end}")
+    print(f"Source Documents: {citation.document_ids}")
+    print("-" * 30)
+```

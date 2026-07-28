@@ -1,55 +1,106 @@
-﻿---
-title: Claude-3-7-Sonnet â€” Examples
+---
+title: Claude 3.7 Sonnet — Code Examples
 service: 01-Language-Models
 model: Claude-3-7-Sonnet
 section: 03-Models
 file: Examples.md
 last_updated: 2026-07-28
-tags: [language-models, claude-3-7-sonnet, examples]
+tags: [language-models, claude-3-7-sonnet, examples, code, python, reasoning]
 author: Antigravity AI Knowledge Engine
 ---
 
-# Claude-3-7-Sonnet â€” Examples
+# Claude 3.7 Sonnet — Code Examples
 
-## Model Specification: Claude-3-7-Sonnet
-- **Model Name**: Claude-3-7-Sonnet
-- **Primary Developer / Provider**: SOTA AI Provider
-- **Model Family**: Large Language Model Series
-- **Architecture**: Decoder-Only Transformer / Mixture-of-Experts (MoE)
-- **Context Window**: 128,000 to 2,000,000 tokens
-- **API Availability**: Official REST API, Python SDK, Cloud Ecosystems
+Practical, executable Python examples showing how to configure Thinking Mode and utilize XML prompt structures.
 
-## Examples Detailed Breakdown
+---
 
-### Key Specifications & Highlights
-- **Reasoning & Instruction Following**: SOTA benchmark scores.
-- **Multilingual Support**: High precision across 50+ natural languages.
-- **Tool Use & Function Calling**: Native JSON schema enforcement.
+## Example 1: Enabling Thinking Mode (Reasoning)
 
-### Technical Performance Analysis
-1. **Strengths**: Exceptional reasoning, low latency, robust developer tooling.
-2. **Weaknesses**: Token pricing for high-volume enterprise ingestion.
-3. **Best Use Cases**: Enterprise RAG, agentic workflows, customer service, automated code writing.
+This script configures a thinking budget, forcing the model to allocate reasoning tokens, and prints out the final answer.
 
-## Code Example (Claude-3-7-Sonnet API Request)
-`python
+```python
 import os
-from openai import OpenAI
+import anthropic
 
-client = OpenAI(api_key=os.environ.get("API_KEY"))
+client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
 
-response = client.chat.completions.create(
-    model="claude-3-7-sonnet",
+# API call configuring thinking budget
+response = client.messages.create(
+    model="claude-3-7-sonnet-20250219",
+    max_tokens=4096,  # Must be larger than thinking budget
+    temperature=1.0,  # Required to be exactly 1.0 when thinking is enabled
+    thinking={
+        "type": "enabled",
+        "budget_tokens": 2048  # Allocates 2048 tokens for internal reasoning
+    },
     messages=[
-        {"role": "system", "content": "You are a helpful AI assistant."},
-        {"role": "user", "content": "Provide a technical summary of Claude-3-7-Sonnet capabilities."}
-    ],
-    temperature=0.7,
-    max_tokens=1000
+        {
+            "role": "user",
+            "content": "Verify if there is a race condition in a multi-threaded Python increment operation: `x += 1`"
+        }
+    ]
 )
 
-print(response.choices[0].message.content)
-`
+# Output final response
+print("Response Output:")
+print(response.content[0].text)
+```
 
-## Related Models & Alternatives
-- See [08-Comparisons](../08-Comparisons/Decision-Matrix.md) for side-by-side performance benchmarks.
+---
+
+## Example 2: XML Structured Prompts for Code Review
+
+This script passes code inside XML tags, guiding the model to evaluate the structure and return results inside designated output wrappers.
+
+```python
+import os
+import anthropic
+
+client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
+
+# Structured XML Prompt
+prompt = """
+<instructions>
+Review the provided Go source code file. Identify any issues with unclosed database connections.
+</instructions>
+
+<code_file>
+package main
+
+import (
+    "database/sql"
+    _ "github.com/lib/pq"
+)
+
+func getUserEmail(db *sql.DB, userId int) (string, error) {
+    rows, err := db.Query("SELECT email FROM users WHERE id = $1", userId)
+    if err != nil {
+        return "", err
+    }
+    // Note: missing defer rows.Close() here
+    
+    var email string
+    for rows.Next() {
+        err = rows.Scan(&email)
+        if err != nil {
+            return "", err
+        }
+    }
+    return email, nil
+}
+</code_file>
+
+Please structure your review inside <review_output> tags.
+"""
+
+response = client.messages.create(
+    model="claude-3-7-sonnet-20250219",
+    max_tokens=1024,
+    messages=[
+        {"role": "user", "content": prompt}
+    ]
+)
+
+print(response.content[0].text)
+```

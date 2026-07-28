@@ -1,52 +1,50 @@
-﻿---
-title: Language Models â€” AI-Terminology
+---
+title: Language Models — AI Terminology
 service: 01-Language-Models
 section: 00-Overview
 file: AI-Terminology.md
 last_updated: 2026-07-28
-tags: [language-models, llm, 00-overview, ai-terminology]
+tags: [language-models, llm, terminology, glossary]
 author: Antigravity AI Knowledge Engine
 ---
 
-# AI-Terminology
+# AI & LLM Terminology
 
-## Executive Summary
-Detailed technical breakdown of **AI-Terminology** within the **00-Overview** domain of Large Language Models (LLMs).
+A glossary of key concepts, technical terms, and metrics used in the development, optimization, and deployment of Large Language Models (LLMs).
 
-## Key Concepts & Architecture
-- **Domain**: Large Language Models & Natural Language Processing
-- **Core Technology**: Decoder-Only Transformers, Mixture-of-Experts (MoE), Attention Mechanisms (FlashAttention-3, RoPE)
-- **Industry Standard**: Modern LLM pipelines serving token completions with low Time-to-First-Token (TTFT) and high throughput (tok/s).
+---
 
-## Detailed Analysis
-1. **Technical Foundation**: How AI-Terminology optimizes context retrieval, reasoning depth, instruction following, and output generation.
-2. **Production Application**: Best practices for integrating AI-Terminology into enterprise applications.
-3. **Trade-offs**: Evaluating context window size vs. processing latency, API token pricing vs. open-weights self-hosting.
+## 1. Core Model & Data Concepts
 
-## Best Practices
-- Benchmark using standardized evaluation frameworks (MMLU, GPQA, Chatbot Arena).
-- Configure temperature (.2 - 0.7$) based on output requirements (factual vs creative).
-- Utilize prompt caching for repeated long-context system prompts to reduce cost by up to 50%.
+* **Token / Tokenization**: The process of breaking down text into smaller units (characters, subwords, or words) that can be processed by a neural network. On average, 1 token corresponds to approximately 0.75 English words.
+* **Context Window (Context Length)**: The maximum number of tokens a model can process in a single request (combining the system prompt, user prompt, history, and generated output). Exceeding this limit causes the model to lose track of earlier parts of the conversation.
+* **Parameters**: The internal variables (weights and biases) of the neural network that are adjusted during training. Parameter count (e.g., 8B, 70B) is a key indicator of model capacity.
+* **Active vs. Total Parameters**: In Mixture-of-Experts (MoE) architectures, the total parameters represent all weights within the model, while the active parameters represent the subset of weights executed for any single token.
 
-## Code / Configuration Example
-`python
-import os
-from openai import OpenAI
+---
 
-client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+## 2. Generation & Decoding Parameters
 
-response = client.chat.completions.create(
-    model="gpt-4o",
-    messages=[
-        {"role": "system", "content": "You are an expert AI software architect."},
-        {"role": "user", "content": "Explain AI-Terminology in the context of production LLM deployment."}
-    ],
-    temperature=0.3,
-    max_tokens=1000
-)
+* **Temperature**: A hyperparameter that scales the logits (raw outputs) of the model's prediction head before applying the softmax function. Lower values (e.g., 0.1 - 0.3) force the model to pick highly probable tokens, making outputs deterministic and factual. Higher values (e.g., 0.7 - 1.0) increase diversity, making outputs more creative.
+* **Top-P (Nucleus Sampling)**: A decoding technique that selects from the smallest subset of tokens whose cumulative probability exceeds the threshold $p$ (e.g., $p=0.9$).
+* **Top-K**: A decoding technique that limits the candidate pool to the $k$ most probable next tokens.
+* **Hallucination**: A phenomenon where a model generates text that is grammatically correct but factually incorrect, nonsensical, or ungrounded in the source context.
 
-print(response.choices[0].message.content)
-`
+---
 
-## Related References
-- See [00-Overview](./00-Overview/README.md) and [08-Comparisons](./08-Comparisons/README.md) for decision matrices.
+## 3. Training & Adaptation Techniques
+
+* **Supervised Fine-Tuning (SFT)**: The process of training a pre-trained base model on instruction-following datasets to align its outputs with an assistant behavior.
+* **Reinforcement Learning from Human Feedback (RLHF)**: An alignment method that uses human feedback rankings to optimize a model's policy, steering it toward safe and helpful outputs.
+* **LoRA (Low-Rank Adaptation)**: A Parameter-Efficient Fine-Tuning (PEFT) method that freezes pre-trained model weights and injects small, trainable rank decomposition matrices, reducing GPU memory requirements during training by up to 90%.
+* **QLoRA (Quantized LoRA)**: An extension of LoRA where the base model is quantized (typically to 4-bit) before adding the LoRA adapters, allowing fine-tuning of large models on consumer-grade GPUs.
+
+---
+
+## 4. Inference & Serving Metrics
+
+* **KV Cache (Key-Value Cache)**: A GPU memory buffer that stores key and value states of attention layers for previously processed tokens, avoiding redundant computations and reducing output generation time.
+* **Time to First Token (TTFT)**: The time elapsed between sending a prompt to the model and receiving the first output token. A key latency metric in user experience.
+* **Time Per Output Token (TPOT)**: The average time taken to generate each subsequent token after the first token has been produced. Equivalent to the inverse of Tokens Per Second (TPS).
+* **Quantization**: Compressing a model's weights from higher precision floating-point types (like FP16) to lower precision types (like FP8 or INT4) to save memory and increase throughput.
+* **Retrieval-Augmented Generation (RAG)**: A framework that connects an LLM to external data sources (e.g., vector databases) to retrieve relevant context before generation, reducing hallucinations and providing access to real-time or private information.

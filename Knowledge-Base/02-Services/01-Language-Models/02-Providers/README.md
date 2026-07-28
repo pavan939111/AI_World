@@ -1,4 +1,4 @@
-﻿---
+---
 title: Language Models â€” 02-Providers
 service: 01-Language-Models
 category: 02-Providers
@@ -9,8 +9,7 @@ author: Antigravity AI Knowledge Engine
 
 # Language Models â€” 02-Providers
 
-## Overview
-Comprehensive guide to **02-Providers** in the Language Models AI service domain.
+Comprehensive profiles of key commercial API and open-weights Large Language Model (LLM) providers, detailing model rosters, native capabilities (like multimodal processing or reasoning), pricing models, developer utilities, and API integration examples.
 
 ## Key Sections
 - [OpenAI.md](./OpenAI.md)

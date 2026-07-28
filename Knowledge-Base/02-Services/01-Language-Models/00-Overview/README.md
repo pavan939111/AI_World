@@ -1,4 +1,4 @@
-﻿---
+---
 title: Language Models â€” 00-Overview
 service: 01-Language-Models
 category: 00-Overview
@@ -9,8 +9,7 @@ author: Antigravity AI Knowledge Engine
 
 # Language Models â€” 00-Overview
 
-## Overview
-Comprehensive guide to **00-Overview** in the Language Models AI service domain.
+Comprehensive overview of Large Language Models (LLMs), covering their foundational concepts, historical milestones, architectural evolution, training and serving pipelines, terminology, and answers to frequently asked questions.
 
 ## Key Sections
 - [What-are-Language-Models.md](./What-are-Language-Models.md)

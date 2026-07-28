@@ -1,52 +1,75 @@
-﻿---
-title: Language Models â€” Temperature-and-Top-P
+---
+title: Language Models — Logits & Sampling (Temperature, Top-P, Top-K)
 service: 01-Language-Models
 section: 01-Fundamentals
 file: Temperature-and-Top-P.md
 last_updated: 2026-07-28
-tags: [language-models, llm, 01-fundamentals, temperature-and-top-p]
+tags: [language-models, llm, temperature, sampling, logits]
 author: Antigravity AI Knowledge Engine
 ---
 
-# Temperature-and-Top-P
+# Logits & Sampling: Temperature, Top-P, and Top-K
 
-## Executive Summary
-Detailed technical breakdown of **Temperature-and-Top-P** within the **01-Fundamentals** domain of Large Language Models (LLMs).
+Large Language Models do not generate text directly. Instead, they output raw, unnormalized scores called **logits** for every token in their vocabulary. Sampling parameters determine how these logits are processed to select the next token.
 
-## Key Concepts & Architecture
-- **Domain**: Large Language Models & Natural Language Processing
-- **Core Technology**: Decoder-Only Transformers, Mixture-of-Experts (MoE), Attention Mechanisms (FlashAttention-3, RoPE)
-- **Industry Standard**: Modern LLM pipelines serving token completions with low Time-to-First-Token (TTFT) and high throughput (tok/s).
+---
 
-## Detailed Analysis
-1. **Technical Foundation**: How Temperature-and-Top-P optimizes context retrieval, reasoning depth, instruction following, and output generation.
-2. **Production Application**: Best practices for integrating Temperature-and-Top-P into enterprise applications.
-3. **Trade-offs**: Evaluating context window size vs. processing latency, API token pricing vs. open-weights self-hosting.
+## 1. Convert Logits to Probabilities
 
-## Best Practices
-- Benchmark using standardized evaluation frameworks (MMLU, GPQA, Chatbot Arena).
-- Configure temperature (.2 - 0.7$) based on output requirements (factual vs creative).
-- Utilize prompt caching for repeated long-context system prompts to reduce cost by up to 50%.
+For a model with vocabulary size $V$, the output of the final layer is a vector of logits $Z = (z_1, z_2, \dots, z_V)$. Applying the standard **Softmax** function maps these logits to a probability distribution where values sum to 1:
 
-## Code / Configuration Example
-`python
-import os
-from openai import OpenAI
+$$p_i = \frac{e^{z_i}}{\sum_{j=1}^V e^{z_j}}$$
 
-client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+---
 
-response = client.chat.completions.create(
-    model="gpt-4o",
-    messages=[
-        {"role": "system", "content": "You are an expert AI software architect."},
-        {"role": "user", "content": "Explain Temperature-and-Top-P in the context of production LLM deployment."}
-    ],
-    temperature=0.3,
-    max_tokens=1000
-)
+## 2. Temperature Tuning
 
-print(response.choices[0].message.content)
-`
+**Temperature ($T$)** scales the logits before the Softmax function is applied, modifying the shape of the probability distribution:
 
-## Related References
-- See [00-Overview](./00-Overview/README.md) and [08-Comparisons](./08-Comparisons/README.md) for decision matrices.
+$$p_i = \frac{e^{z_i / T}}{\sum_{j=1}^V e^{z_j / T}}$$
+
+```
+         Low Temperature (T = 0.2)            High Temperature (T = 1.0)
+         
+          Probability                           Probability
+             ▲                                     ▲
+             │    █                                │    █
+             │    █                                │    █  █
+             │    █  █                             │    █  █  █  █
+             │    █  █  .  .                       │    █  █  █  █  █  █
+             └────────────────►                    └─────────────────►
+                   Tokens                                Tokens
+             (Highly Deterministic)                    (Creative / Diverse)
+```
+
+* **$T \to 0$ (Greedy Decoding / Temperature = 0)**: The probability of the most likely token approaches 1, while all others approach 0. Generation becomes deterministic and reproducible.
+* **Low Temperature ($0 < T < 0.5$)**: Concentrates probability mass on the top options. It reduces mistakes and hallucinations, making it ideal for code generation, mathematical reasoning, and factual Q&A.
+* **High Temperature ($T > 0.7$)**: Flattens the probability distribution, making less probable tokens more likely to be selected. This increases diversity and creativity but elevates the risk of incoherent text or factual hallucinations.
+
+---
+
+## 3. Sampling Techniques: Top-K and Top-P
+
+To prevent the model from selecting highly improbable "long-tail" tokens (which leads to gibberish), decoding libraries apply filtering before sampling.
+
+### A. Top-K Sampling
+* **Mechanism**: Restricts the selection pool to the $K$ tokens with the highest probabilities. For example, if $K=50$, only the top 50 candidates are considered, and the remaining tokens are discarded.
+* **Limitation**: A fixed $K$ is rigid. If the top token has a probability of 99%, Top-K still samples from the remaining 49 options, even though they are extremely unlikely.
+
+### B. Top-P (Nucleus Sampling)
+* **Mechanism**: Dynamically scales the selection pool. It selects the smallest set of tokens whose cumulative probability exceeds the threshold $p$ (e.g., $p=0.9$ or $90\%$).
+* **Benefit**: If the model is highly confident (e.g., the top token has $p=0.95$), the pool shrinks to a single token. If the model is uncertain, the pool expands to include dozens of tokens, ensuring natural variation.
+
+---
+
+## 4. Parameter Settings Guide
+
+| Task Category | Temperature ($T$) | Top-P ($p$) | Rationale |
+| :--- | :--- | :--- | :--- |
+| **Code Generation & Math** | `0.0` (or `0.1`) | `0.9` | Prefers exact syntax and logical consistency; avoids random variations. |
+| **Factual Q&A / RAG** | `0.2` | `0.9` | Maximizes alignment with retrieved context, minimizing hallucination. |
+| **Summarization & Translation**| `0.3` - `0.5` | `0.9` | Balances natural sentence structure with alignment to source text. |
+| **Creative Writing & Chatbots**| `0.7` - `0.9` | `0.95` | Encourages stylistic variation, conversational tone, and vocabulary diversity. |
+
+> [!NOTE]
+> It is recommended to adjust either Temperature or Top-P, but not both simultaneously, as their interactions can make output behavior unpredictable.

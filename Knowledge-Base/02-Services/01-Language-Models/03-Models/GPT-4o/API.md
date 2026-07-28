@@ -1,55 +1,114 @@
-﻿---
-title: GPT-4o â€” API
+---
+title: GPT-4o — API Reference
 service: 01-Language-Models
 model: GPT-4o
 section: 03-Models
 file: API.md
 last_updated: 2026-07-28
-tags: [language-models, gpt-4o, api]
+tags: [language-models, gpt-4o, api, integration]
 author: Antigravity AI Knowledge Engine
 ---
 
-# GPT-4o â€” API
+# GPT-4o — API Reference
 
-## Model Specification: GPT-4o
-- **Model Name**: GPT-4o
-- **Primary Developer / Provider**: SOTA AI Provider
-- **Model Family**: Large Language Model Series
-- **Architecture**: Decoder-Only Transformer / Mixture-of-Experts (MoE)
-- **Context Window**: 128,000 to 2,000,000 tokens
-- **API Availability**: Official REST API, Python SDK, Cloud Ecosystems
+Direct REST API endpoints and HTTP payload definitions for interacting with GPT-4o.
 
-## API Detailed Breakdown
+---
 
-### Key Specifications & Highlights
-- **Reasoning & Instruction Following**: SOTA benchmark scores.
-- **Multilingual Support**: High precision across 50+ natural languages.
-- **Tool Use & Function Calling**: Native JSON schema enforcement.
+## 1. Chat Completions Endpoint
 
-### Technical Performance Analysis
-1. **Strengths**: Exceptional reasoning, low latency, robust developer tooling.
-2. **Weaknesses**: Token pricing for high-volume enterprise ingestion.
-3. **Best Use Cases**: Enterprise RAG, agentic workflows, customer service, automated code writing.
+Generates completions for text, vision, and tool requests.
 
-## Code Example (GPT-4o API Request)
-`python
-import os
-from openai import OpenAI
+* **HTTP Method**: `POST`
+* **Endpoint URL**: `https://api.openai.com/v1/chat/completions`
+* **Authentication**: Bearer Token via HTTP header:
+  `Authorization: Bearer OPENAI_API_KEY`
 
-client = OpenAI(api_key=os.environ.get("API_KEY"))
+### Standard Request Payload Schema
+```json
+{
+  "model": "gpt-4o",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are a backend helper agent."
+    },
+    {
+      "role": "user",
+      "content": "Generate a unique database key pattern."
+    }
+  ],
+  "temperature": 0.3,
+  "max_tokens": 150,
+  "stream": false
+}
+```
 
-response = client.chat.completions.create(
-    model="gpt-4o",
-    messages=[
-        {"role": "system", "content": "You are a helpful AI assistant."},
-        {"role": "user", "content": "Provide a technical summary of GPT-4o capabilities."}
-    ],
-    temperature=0.7,
-    max_tokens=1000
-)
+### Standard Response Payload Schema
+```json
+{
+  "id": "chatcmpl-9A8z...",
+  "object": "chat.completion",
+  "created": 1715641200,
+  "model": "gpt-4o-2024-05-13",
+  "choices": [
+    {
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "A recommended pattern is..."
+      },
+      "logprobs": null,
+      "finish_reason": "stop"
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 25,
+    "completion_tokens": 15,
+    "total_tokens": 40,
+    "prompt_tokens_details": {
+      "cached_tokens": 0
+    }
+  },
+  "system_fingerprint": "fp_c229..."
+}
+```
 
-print(response.choices[0].message.content)
-`
+---
 
-## Related Models & Alternatives
-- See [08-Comparisons](../08-Comparisons/Decision-Matrix.md) for side-by-side performance benchmarks.
+## 2. Server-Sent Events (SSE) Streaming
+
+By setting `"stream": true` in the request payload, the server returns a stream of events containing incremental token chunks.
+
+* **Response Header**: `Content-Type: text/event-stream`
+* **Event Pattern**:
+  ```text
+  data: {"id":"chatcmpl-...","object":"chat.completion.chunk","choices":[{"index":0,"delta":{"content":"Hello"},"finish_reason":null}]}
+
+  data: {"id":"chatcmpl-...","object":"chat.completion.chunk","choices":[{"index":0,"delta":{"content":"!"},"finish_reason":"stop"}]}
+
+  data: [DONE]
+  ```
+
+---
+
+## 3. Common Error Codes & Handling
+
+When API requests fail, the server returns standard JSON error bodies accompanied by HTTP status codes:
+
+* **`401 Unauthorized`**: Invalid API key or configuration header.
+* **`429 Too Many Requests`**: Rate limits (TPM/RPM) exceeded, or credit balance is exhausted.
+* **`500 Internal Server Error`**: OpenAI internal service issues.
+
+### JSON Error Structure
+```json
+{
+  "error": {
+    "message": "Rate limit reached for gpt-4o in organization org-123 on tokens per min (TPM): Limit 150,000, Used 149,850, Requested 200.",
+    "type": "tokens",
+    "param": null,
+    "code": "rate_limit_exceeded"
+  }
+}
+```
+* **Handling Strategy**: Implement **exponential backoff with jitter** for all `429` and `5xx` responses to spread retry spikes.

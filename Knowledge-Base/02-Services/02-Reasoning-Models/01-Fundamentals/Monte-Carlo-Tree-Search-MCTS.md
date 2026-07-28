@@ -1,60 +1,52 @@
-﻿---
-title: Reasoning Models â€” Monte-Carlo-Tree-Search-MCTS
+---
+title: Reasoning Models — Monte Carlo Tree Search (MCTS)
 service: 02-Reasoning-Models
 section: 01-Fundamentals
 file: Monte-Carlo-Tree-Search-MCTS.md
 last_updated: 2026-07-28
-tags: [reasoning-models, deepseek-r1, o1, cot, 01-fundamentals, monte-carlo-tree-search-mcts]
+tags: [reasoning-models, mcts, search-decoding, algorithms]
 author: Antigravity AI Knowledge Engine
 ---
 
-# Monte-Carlo-Tree-Search-MCTS
+# Monte Carlo Tree Search (MCTS)
 
-## Executive Summary
-Detailed technical breakdown of **Monte-Carlo-Tree-Search-MCTS** within the **01-Fundamentals** domain of AI Reasoning Models (Chain-of-Thought / Test-Time Compute Scaling).
+**Monte Carlo Tree Search (MCTS)** is a heuristic search algorithm used to navigate decision trees by running random simulations. When integrated with large language models (such as search-based decoding architectures like Q*), MCTS enables the system to evaluate multiple reasoning paths during inference, scaling test-time compute.
 
-## Key Concepts & Architecture
-- **Domain**: AI Reasoning & Complex Problem Solving
-- **Core Technology**: Reinforcement Learning (RLAIF / GRPO), Test-Time Compute Scaling, Hidden Chain-of-Thought (CoT) Thinking Tokens, Process Reward Models (PRMs).
-- **Industry Standard**: Models that dynamically allocate extra computation time ("thinking") before producing a final answer, achieving SOTA accuracy on AIME 2024 Math, MATH-500, Codeforces, and GPQA.
+---
 
-## Detailed Analysis
-1. **Technical Foundation**: How Monte-Carlo-Tree-Search-MCTS optimizes test-time compute, error backtracking, self-correction, and logical verification.
-2. **Production Application**: Best practices for integrating reasoning models into automated code generators, mathematical engines, and multi-step analytical software.
-3. **Trade-offs**: Evaluating extended generation latency (10s - 60s thinking time) vs. output accuracy, and reasoning token cost vs. standard LLMs.
+## 1. The Four Stages of MCTS
 
-## Best Practices
-- **Minimalist Prompting**: Do NOT instruct reasoning models to "think step by step" (they do this natively via reinforcement learning). State the problem clearly and concisely.
-- **Reasoning Effort Selection**: Adjust easoning_effort (low, medium, high) or max_completion_tokens based on task difficulty to control cost and latency.
-- **Handling Reasoning Tokens**: Parse <think> tags (DeepSeek-R1) or easoning_tokens metadata (OpenAI o1/o3-mini) separately from final output text.
+Every search cycle in MCTS follows four logical steps:
 
-## Code / Configuration Example (DeepSeek-R1 / OpenAI o3-mini)
-`python
-import os
-from openai import OpenAI
+```mermaid
+graph LR
+    A[Selection] --> B[Expansion]
+    B --> C[Simulation]
+    C --> D[Backpropagation]
+    D --> A
+```
 
-# Initialize client for Reasoning Model Inference
-client = OpenAI(
-    base_url="https://api.deepseek.com",
-    api_key=os.environ.get("DEEPSEEK_API_KEY")
-)
+### 1. Selection
+* **Operation**: Starting at the root node (initial user prompt), the algorithm traverses down the search tree by selecting child nodes (intermediate reasoning steps) that maximize a selection policy.
+* **Selection Formula**: Typically utilizes the **Upper Confidence Bound applied to Trees (UCT)**:
+  $$UCT = \frac{v_i}{n_i} + c \sqrt{\frac{\ln N}{n_i}}$$
+  * $v_i$: Total accumulated reward score of the node.
+  * $n_i$: Visit count of the node.
+  * $N$: Total visit count of the parent node.
+  * $c$: Exploration constant balancing exploitation (choosing known high-scoring steps) vs. exploration (searching unvisited steps).
 
-response = client.chat.completions.create(
-    model="deepseek-reasoner",
-    messages=[
-        {"role": "user", "content": "Solve the mathematical equation: Prove that there are infinitely many prime numbers using proof by contradiction."}
-    ]
-)
+### 2. Expansion
+* **Operation**: Once a leaf node is reached, the model expands the search tree by generating one or more new candidate reasoning tokens or sentence steps.
 
-# Access reasoning content (<think> tokens) and final answer
-reasoning_content = response.choices[0].message.reasoning_content
-final_answer = response.choices[0].message.content
+### 3. Simulation (Rollout)
+* **Operation**: The model runs a simulation (or rollout) from the newly expanded node to the terminal state (final answer) to evaluate the validity of the reasoning path. In LLM applications, this is scored by Process Reward Models (PRMs) or Outcome Reward Models (ORMs).
 
-print("Thinking Process Snippet:")
-print(reasoning_content[:200])
-print("\nFinal Answer:")
-print(final_answer[:200])
-`
+### 4. Backpropagation
+* **Operation**: The evaluation score of the simulation is backpropagated up the tree, updating the values ($v_i$) and visit counts ($n_i$) of all parent nodes along the traversed path.
 
-## Related References
-- See [00-Overview](./00-Overview/README.md) and [08-Comparisons](./08-Comparisons/README.md) for decision matrices.
+---
+
+## 2. Integration with LLM Decoders
+
+* **Search-Based Decoding**: Instead of using greedy search decoding (which predicts the single next most probable token), MCTS routes multiple token generation paths. This enables the model to identify and prune incorrect logical directions before final output selection.
+* **Accuracy Improvements**: Using MCTS at inference time scales mathematical accuracy and competitive programming ELO scores without altering the underlying model parameters.

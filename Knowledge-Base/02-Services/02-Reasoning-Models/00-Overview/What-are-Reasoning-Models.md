@@ -1,60 +1,65 @@
-﻿---
-title: Reasoning Models â€” What-are-Reasoning-Models
+---
+title: Reasoning Models — What are Reasoning Models
 service: 02-Reasoning-Models
 section: 00-Overview
 file: What-are-Reasoning-Models.md
 last_updated: 2026-07-28
-tags: [reasoning-models, deepseek-r1, o1, cot, 00-overview, what-are-reasoning-models]
+tags: [reasoning-models, test-time-compute, reinforcement-learning, chain-of-thought]
 author: Antigravity AI Knowledge Engine
 ---
 
-# What-are-Reasoning-Models
+# What are Reasoning Models?
 
-## Executive Summary
-Detailed technical breakdown of **What-are-Reasoning-Models** within the **00-Overview** domain of AI Reasoning Models (Chain-of-Thought / Test-Time Compute Scaling).
+**Reasoning Models** represent a paradigm shift in generative artificial intelligence. Unlike standard Large Language Models (LLMs) that immediately predict the next word in a single forward pass, reasoning models dynamically allocate additional computational resources during inference (called **test-time compute scaling**) to formulate, verify, and correct a structural chain-of-thought (CoT) path before outputting a final answer.
 
-## Key Concepts & Architecture
-- **Domain**: AI Reasoning & Complex Problem Solving
-- **Core Technology**: Reinforcement Learning (RLAIF / GRPO), Test-Time Compute Scaling, Hidden Chain-of-Thought (CoT) Thinking Tokens, Process Reward Models (PRMs).
-- **Industry Standard**: Models that dynamically allocate extra computation time ("thinking") before producing a final answer, achieving SOTA accuracy on AIME 2024 Math, MATH-500, Codeforces, and GPQA.
+---
 
-## Detailed Analysis
-1. **Technical Foundation**: How What-are-Reasoning-Models optimizes test-time compute, error backtracking, self-correction, and logical verification.
-2. **Production Application**: Best practices for integrating reasoning models into automated code generators, mathematical engines, and multi-step analytical software.
-3. **Trade-offs**: Evaluating extended generation latency (10s - 60s thinking time) vs. output accuracy, and reasoning token cost vs. standard LLMs.
+## 1. Standard LLMs vs. Reasoning Models
 
-## Best Practices
-- **Minimalist Prompting**: Do NOT instruct reasoning models to "think step by step" (they do this natively via reinforcement learning). State the problem clearly and concisely.
-- **Reasoning Effort Selection**: Adjust easoning_effort (low, medium, high) or max_completion_tokens based on task difficulty to control cost and latency.
-- **Handling Reasoning Tokens**: Parse <think> tags (DeepSeek-R1) or easoning_tokens metadata (OpenAI o1/o3-mini) separately from final output text.
+Standard models and reasoning models diverge across latency, compute, and planning dimensions:
 
-## Code / Configuration Example (DeepSeek-R1 / OpenAI o3-mini)
-`python
+| Dimension / Property | Standard LLMs (System 1) | Reasoning Models (System 2) |
+| :--- | :--- | :--- |
+| **Inference Generation** | Single immediate token generation pipeline. | Multi-step internal reasoning traces before answering. |
+| **Inference Cost (Compute)**| Fixed based on length of input + output. | Scalable; scales based on logical complexity of the query. |
+| **Self-Correction** | Cannot backtrack on tokens already output. | Can detect logic slips and backtrack inside the trace. |
+| **Primary Training Focus** | Supervised Fine-Tuning (SFT) & RLHF. | Large-scale Reinforcement Learning (RL) (e.g., GRPO). |
+| **Optimized Workloads** | Writing, summary, chat, simple queries. | PhD science logic, competitive programming, math proofs. |
+
+---
+
+## 2. Core Architectural Pillars
+
+* **Test-Time Compute Scaling**: Enables the model to allocate more reasoning steps (generates extra "thinking tokens") for harder tasks, mirroring how humans take longer to solve difficult math questions than simple conversational queries.
+* **Process Reward Models (PRMs)**: Unlike Outcome Reward Models (ORMs) which only grade the final completion, PRMs grade each individual reasoning step. This reinforces correct step-by-step logic pathways.
+* **Self-Correction & Backtracking**: Through reinforcement training loops, the model learns to identify its own logical contradictions (e.g. "Wait, this does not yield x = 2. Let me try factoring differently.") and backtrack dynamically.
+
+---
+
+## 3. Basic Integration Example
+
+To query reasoning models, target their respective APIs (like `deepseek-reasoner` or `o3-mini`) and parse the reasoning trace metadata:
+
+```python
 import os
 from openai import OpenAI
 
-# Initialize client for Reasoning Model Inference
 client = OpenAI(
-    base_url="https://api.deepseek.com",
-    api_key=os.environ.get("DEEPSEEK_API_KEY")
+    api_key=os.environ.get("DEEPSEEK_API_KEY"),
+    base_url="https://api.deepseek.com/v1"
 )
 
 response = client.chat.completions.create(
     model="deepseek-reasoner",
     messages=[
-        {"role": "user", "content": "Solve the mathematical equation: Prove that there are infinitely many prime numbers using proof by contradiction."}
+        {"role": "user", "content": "How many combinations exist to color a 3x3 grid using 3 colors if rotation is not considered?"}
     ]
 )
 
-# Access reasoning content (<think> tokens) and final answer
-reasoning_content = response.choices[0].message.reasoning_content
-final_answer = response.choices[0].message.content
+# Extract internal reasoning tokens and visible answer separately
+print("Internal Thinking Process:")
+print(response.choices[0].message.reasoning_content)
 
-print("Thinking Process Snippet:")
-print(reasoning_content[:200])
-print("\nFinal Answer:")
-print(final_answer[:200])
-`
-
-## Related References
-- See [00-Overview](./00-Overview/README.md) and [08-Comparisons](./08-Comparisons/README.md) for decision matrices.
+print("\nFinal Answer Output:")
+print(response.choices[0].message.content)
+```

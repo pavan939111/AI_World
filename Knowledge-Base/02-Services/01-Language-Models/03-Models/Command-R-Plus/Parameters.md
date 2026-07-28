@@ -1,55 +1,41 @@
-﻿---
-title: Command-R-Plus â€” Parameters
+---
+title: Command R+ — Parameters
 service: 01-Language-Models
 model: Command-R-Plus
 section: 03-Models
 file: Parameters.md
 last_updated: 2026-07-28
-tags: [language-models, command-r-plus, parameters]
+tags: [language-models, command-r-plus, parameters, config]
 author: Antigravity AI Knowledge Engine
 ---
 
-# Command-R-Plus â€” Parameters
+# Command R+ — Parameter Reference
 
-## Model Specification: Command-R-Plus
-- **Model Name**: Command-R-Plus
-- **Primary Developer / Provider**: SOTA AI Provider
-- **Model Family**: Large Language Model Series
-- **Architecture**: Decoder-Only Transformer / Mixture-of-Experts (MoE)
-- **Context Window**: 128,000 to 2,000,000 tokens
-- **API Availability**: Official REST API, Python SDK, Cloud Ecosystems
+An overview of generation hyperparameters, RAG database connectors, and tokenizer specifications supported by Command R+.
 
-## Parameters Detailed Breakdown
+---
 
-### Key Specifications & Highlights
-- **Reasoning & Instruction Following**: SOTA benchmark scores.
-- **Multilingual Support**: High precision across 50+ natural languages.
-- **Tool Use & Function Calling**: Native JSON schema enforcement.
+## 1. Primary Parameters
 
-### Technical Performance Analysis
-1. **Strengths**: Exceptional reasoning, low latency, robust developer tooling.
-2. **Weaknesses**: Token pricing for high-volume enterprise ingestion.
-3. **Best Use Cases**: Enterprise RAG, agentic workflows, customer service, automated code writing.
+These configurations control output generation and token boundaries:
 
-## Code Example (Command-R-Plus API Request)
-`python
-import os
-from openai import OpenAI
+| Parameter Name | Data Type | Default Value | Acceptable Range | Description |
+| :--- | :--- | :--- | :--- | :--- |
+| **`temperature`** | `float` | `0.3` | `0.0` to `2.0` | Controls randomness. Enterprise default is set lower (`0.3`) for high RAG precision. |
+| **`p`** | `float` | `0.75` | `0.01` to `0.99` | Nucleus sampling probability threshold. |
+| **`max_tokens`** | `integer` | *Null* | Up to `4,096` | Output generation token limit. |
+| **`frequency_penalty`**| `float` | `0.0` | `0.0` to `1.0` | Penalizes repetitive phrases. |
+| **`presence_penalty`** | `float` | `0.0` | `0.0` to `1.0` | Penalizes repeating topics. |
+| **`connectors`** | `array` | *Empty* | Predefined ids | Activates search connectors (e.g. `[{"id": "web-search"}]`) to trigger RAG grounding. |
 
-client = OpenAI(api_key=os.environ.get("API_KEY"))
+---
 
-response = client.chat.completions.create(
-    model="command-r-plus",
-    messages=[
-        {"role": "system", "content": "You are a helpful AI assistant."},
-        {"role": "user", "content": "Provide a technical summary of Command-R-Plus capabilities."}
-    ],
-    temperature=0.7,
-    max_tokens=1000
-)
+## 2. Tokenizer Specifications
 
-print(response.choices[0].message.content)
-`
+Command R+ utilizes Cohere’s custom high-vocabulary tokenizer:
 
-## Related Models & Alternatives
-- See [08-Comparisons](../08-Comparisons/Decision-Matrix.md) for side-by-side performance benchmarks.
+* **Tokenizer Vocabulary Size**: **255,000 tokens**.
+* **Multilingual Compression Gains**:
+  * Reduces raw token footprints by **30% to 50%** for non-English enterprise scripts (Japanese, Korean, Chinese, Arabic) compared to standard tokenizers.
+  * Allows larger enterprise documents to fit comfortably within the 128k input context window.
+* **Code Efficiency**: Compresses syntax layouts, reducing latency for coding completions.

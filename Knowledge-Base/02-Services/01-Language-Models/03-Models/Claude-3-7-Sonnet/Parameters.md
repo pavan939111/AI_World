@@ -1,55 +1,49 @@
-﻿---
-title: Claude-3-7-Sonnet â€” Parameters
+---
+title: Claude 3.7 Sonnet — Parameters
 service: 01-Language-Models
 model: Claude-3-7-Sonnet
 section: 03-Models
 file: Parameters.md
 last_updated: 2026-07-28
-tags: [language-models, claude-3-7-sonnet, parameters]
+tags: [language-models, claude-3-7-sonnet, parameters, config]
 author: Antigravity AI Knowledge Engine
 ---
 
-# Claude-3-7-Sonnet â€” Parameters
+# Claude 3.7 Sonnet — API Parameters Reference
 
-## Model Specification: Claude-3-7-Sonnet
-- **Model Name**: Claude-3-7-Sonnet
-- **Primary Developer / Provider**: SOTA AI Provider
-- **Model Family**: Large Language Model Series
-- **Architecture**: Decoder-Only Transformer / Mixture-of-Experts (MoE)
-- **Context Window**: 128,000 to 2,000,000 tokens
-- **API Availability**: Official REST API, Python SDK, Cloud Ecosystems
+An overview of runtime configuration parameters and query hyperparameters supported by the Anthropic Claude API endpoints.
 
-## Parameters Detailed Breakdown
+---
 
-### Key Specifications & Highlights
-- **Reasoning & Instruction Following**: SOTA benchmark scores.
-- **Multilingual Support**: High precision across 50+ natural languages.
-- **Tool Use & Function Calling**: Native JSON schema enforcement.
+## 1. Primary Parameters
 
-### Technical Performance Analysis
-1. **Strengths**: Exceptional reasoning, low latency, robust developer tooling.
-2. **Weaknesses**: Token pricing for high-volume enterprise ingestion.
-3. **Best Use Cases**: Enterprise RAG, agentic workflows, customer service, automated code writing.
+| Parameter Name | Data Type | Default Value | Acceptable Range | Description |
+| :--- | :--- | :--- | :--- | :--- |
+| **`max_tokens`** | `integer` | *Required* | Up to `8,192` (standard)<br>Up to `16,384` (thinking) | The maximum number of tokens to generate. Maxes out at 16k when thinking is enabled. |
+| **`system`** | `string` / `array` | *Null* | Text or content blocks | Defines the system instruction or persona settings. Supports caching headers. |
+| **`temperature`** | `float` | `1.0` | `0.0` to `1.0` | Controls randomness. Must be strictly set to `1.0` if `thinking` is enabled. |
+| **`top_p`** | `float` | `1.0` | `0.0` to `1.0` | Discards tokens below cumulative threshold. |
+| **`top_k`** | `integer` | *Null* | $\ge 1$ | Restricts candidates to the top $k$ most probable tokens. |
 
-## Code Example (Claude-3-7-Sonnet API Request)
-`python
-import os
-from openai import OpenAI
+---
 
-client = OpenAI(api_key=os.environ.get("API_KEY"))
+## 2. Thinking Configuration (Reasoning Mode)
 
-response = client.chat.completions.create(
-    model="claude-3-7-sonnet",
-    messages=[
-        {"role": "system", "content": "You are a helpful AI assistant."},
-        {"role": "user", "content": "Provide a technical summary of Claude-3-7-Sonnet capabilities."}
-    ],
-    temperature=0.7,
-    max_tokens=1000
-)
+To enable System 2 deliberate reasoning, pass the `thinking` object in the API request:
 
-print(response.choices[0].message.content)
-`
+* **`thinking`**: Configures the reasoning behavior.
+  * **`type`**: `string` (Must be set to `"enabled"` or `"disabled"`).
+  * **`budget_tokens`**: `integer` (Sets the maximum number of output tokens dedicated to thinking). Must satisfy:
+    * $\ge 1024$ tokens.
+    * $\le$ `max_tokens` parameter value.
 
-## Related Models & Alternatives
-- See [08-Comparisons](../08-Comparisons/Decision-Matrix.md) for side-by-side performance benchmarks.
+> [!WARNING]
+> If `thinking` is enabled, the API requires `temperature` to be explicitly set to `1.0`. Any other temperature setting will return an API validation error.
+
+---
+
+## 3. Tool Use & Formatting
+
+* **`tools`**: An array of tools available to the model, supporting parameters defined as JSON Schema.
+* **`tool_choice`**: Sets tool behavior: `{"type": "auto"}` (model chooses), `{"type": "any"}` (forces calling at least one tool), or `{"type": "tool", "name": "..."}` (enforces calling a specific tool).
+* **`metadata`**: Object containing tracking headers (e.g., custom user IDs).

@@ -1,60 +1,47 @@
-﻿---
-title: Reasoning Models â€” Test-Time-Compute-Scaling
+---
+title: Reasoning Models — Test-Time Compute Scaling
 service: 02-Reasoning-Models
 section: 01-Fundamentals
 file: Test-Time-Compute-Scaling.md
 last_updated: 2026-07-28
-tags: [reasoning-models, deepseek-r1, o1, cot, 01-fundamentals, test-time-compute-scaling]
+tags: [reasoning-models, test-time-compute, scaling-laws, inference, budget]
 author: Antigravity AI Knowledge Engine
 ---
 
-# Test-Time-Compute-Scaling
+# Test-Time Compute Scaling
 
-## Executive Summary
-Detailed technical breakdown of **Test-Time-Compute-Scaling** within the **01-Fundamentals** domain of AI Reasoning Models (Chain-of-Thought / Test-Time Compute Scaling).
+**Test-Time Compute Scaling** refers to scaling the computational resources allocated to a model *during inference* (generation time) to solve complex problems, rather than only scaling parameters during training.
 
-## Key Concepts & Architecture
-- **Domain**: AI Reasoning & Complex Problem Solving
-- **Core Technology**: Reinforcement Learning (RLAIF / GRPO), Test-Time Compute Scaling, Hidden Chain-of-Thought (CoT) Thinking Tokens, Process Reward Models (PRMs).
-- **Industry Standard**: Models that dynamically allocate extra computation time ("thinking") before producing a final answer, achieving SOTA accuracy on AIME 2024 Math, MATH-500, Codeforces, and GPQA.
+---
 
-## Detailed Analysis
-1. **Technical Foundation**: How Test-Time-Compute-Scaling optimizes test-time compute, error backtracking, self-correction, and logical verification.
-2. **Production Application**: Best practices for integrating reasoning models into automated code generators, mathematical engines, and multi-step analytical software.
-3. **Trade-offs**: Evaluating extended generation latency (10s - 60s thinking time) vs. output accuracy, and reasoning token cost vs. standard LLMs.
+## 1. Shift in AI Scaling Laws
 
-## Best Practices
-- **Minimalist Prompting**: Do NOT instruct reasoning models to "think step by step" (they do this natively via reinforcement learning). State the problem clearly and concisely.
-- **Reasoning Effort Selection**: Adjust easoning_effort (low, medium, high) or max_completion_tokens based on task difficulty to control cost and latency.
-- **Handling Reasoning Tokens**: Parse <think> tags (DeepSeek-R1) or easoning_tokens metadata (OpenAI o1/o3-mini) separately from final output text.
+Traditional scaling laws (e.g. Kaplan et al., Chinchilla scaling laws) established that model performance scales predictably with the number of parameters, dataset size, and training compute. Reasoning models introduce a new dimension:
 
-## Code / Configuration Example (DeepSeek-R1 / OpenAI o3-mini)
-`python
-import os
-from openai import OpenAI
+* **Training Scaling Limits**: Pre-training models on public web data is hitting quality ceilings (data scarcity and hardware power constraints).
+* **Inference scaling**: By scaling computation at inference time (generating more reasoning tokens, running search trees, or utilizing voting ensembles), models continue to show significant accuracy improvements, bypassing training scaling caps.
 
-# Initialize client for Reasoning Model Inference
-client = OpenAI(
-    base_url="https://api.deepseek.com",
-    api_key=os.environ.get("DEEPSEEK_API_KEY")
-)
+---
 
-response = client.chat.completions.create(
-    model="deepseek-reasoner",
-    messages=[
-        {"role": "user", "content": "Solve the mathematical equation: Prove that there are infinitely many prime numbers using proof by contradiction."}
-    ]
-)
+## 2. Exploration Strategies in Search Space
 
-# Access reasoning content (<think> tokens) and final answer
-reasoning_content = response.choices[0].message.reasoning_content
-final_answer = response.choices[0].message.content
+During inference, models scale compute using several core strategies:
 
-print("Thinking Process Snippet:")
-print(reasoning_content[:200])
-print("\nFinal Answer:")
-print(final_answer[:200])
-`
+### A. Sequential Chain-of-Thought Scaling
+* **Mechanism**: Autoregressively generating longer sequences of intermediate reasoning tokens. The model evaluates its own premises sequentially.
 
-## Related References
-- See [00-Overview](./00-Overview/README.md) and [08-Comparisons](./08-Comparisons/README.md) for decision matrices.
+### B. Best-of-N Sampling & Voting (Ensembles)
+* **Mechanism**: Generating $N$ independent completions for a single prompt and selecting the final response based on voting consensus (e.g. majority vote on mathematical answers).
+
+### C. Tree Search Decoding (MCTS)
+* **Mechanism**: Running tree search algorithms (like Monte Carlo Tree Search) during inference to generate, evaluate, and prune reasoning steps, navigating only the highest-value logical branches.
+
+---
+
+## 3. Compute Economics: Offline vs. Online
+
+Scaling test-time compute shifts the financial and environmental costs of AI:
+
+* **Standard LLMs**: Heavy offline pre-training cost (millions of dollars in GPU training clusters), but very cheap inference API calls.
+* **Reasoning Models**: Shift costs toward **online inference**. Every reasoning prompt requires generating thousands of thinking tokens, increasing API per-request hosting costs and energy usage.
+* **Production Management**: Developers manage this using parameters like `reasoning_effort` (low, medium, high) to set a maximum thinking budget based on task priority.

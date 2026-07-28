@@ -1,55 +1,50 @@
-﻿---
-title: Qwen-2-5-72B â€” Prompting
+---
+title: Qwen 2.5 72B — Prompting Guide
 service: 01-Language-Models
 model: Qwen-2-5-72B
 section: 03-Models
 file: Prompting.md
 last_updated: 2026-07-28
-tags: [language-models, qwen-2-5-72b, prompting]
+tags: [language-models, qwen-2-5-72b, prompting, template]
 author: Antigravity AI Knowledge Engine
 ---
 
-# Qwen-2-5-72B â€” Prompting
+# Qwen 2.5 72B — Prompting Guide
 
-## Model Specification: Qwen-2-5-72B
-- **Model Name**: Qwen-2-5-72B
-- **Primary Developer / Provider**: SOTA AI Provider
-- **Model Family**: Large Language Model Series
-- **Architecture**: Decoder-Only Transformer / Mixture-of-Experts (MoE)
-- **Context Window**: 128,000 to 2,000,000 tokens
-- **API Availability**: Official REST API, Python SDK, Cloud Ecosystems
+Optimizing prompts for Qwen 2.5 72B requires formatting inputs matching Qwen’s native Chat Markup Language (ChatML) templates.
 
-## Prompting Detailed Breakdown
+---
 
-### Key Specifications & Highlights
-- **Reasoning & Instruction Following**: SOTA benchmark scores.
-- **Multilingual Support**: High precision across 50+ natural languages.
-- **Tool Use & Function Calling**: Native JSON schema enforcement.
+## 1. Native ChatML Format Structure
 
-### Technical Performance Analysis
-1. **Strengths**: Exceptional reasoning, low latency, robust developer tooling.
-2. **Weaknesses**: Token pricing for high-volume enterprise ingestion.
-3. **Best Use Cases**: Enterprise RAG, agentic workflows, customer service, automated code writing.
+Qwen models utilize custom tokens to delimit conversational turns and roles. If you query raw weight servers without using high-level SDK chat arrays, your text files must conform to the ChatML sequence:
 
-## Code Example (Qwen-2-5-72B API Request)
-`python
-import os
-from openai import OpenAI
+```text
+<|im_start|>system
+You are a code refactoring assistant. Keep answers concise.<|im_end|>
+<|im_start|>user
+Refactor the following loop:
+for i in range(len(arr)):
+    print(arr[i])<|im_end|>
+<|im_start|>assistant
+```
 
-client = OpenAI(api_key=os.environ.get("API_KEY"))
+### ChatML Token Definitions
+* **`<|im_start|>`**: Declares the start of an input turn segment. Followed immediately by the role name (`system`, `user`, or `assistant`).
+* **`<|im_end|>`**: Declares the end of the turn segment, telling the inference engine that input for that role has completed.
 
-response = client.chat.completions.create(
-    model="qwen-2-5-72b",
-    messages=[
-        {"role": "system", "content": "You are a helpful AI assistant."},
-        {"role": "user", "content": "Provide a technical summary of Qwen-2-5-72B capabilities."}
-    ],
-    temperature=0.7,
-    max_tokens=1000
-)
+---
 
-print(response.choices[0].message.content)
-`
+## 2. System Instruction Optimization
 
-## Related Models & Alternatives
-- See [08-Comparisons](../08-Comparisons/Decision-Matrix.md) for side-by-side performance benchmarks.
+Qwen 2.5 72B exhibits strong adherence to instructions:
+* **State Output Schemes Early**: Detail JSON or markdown formats directly inside the system block.
+* **Define Formatting Restraints**: Instruct the model to exclude conversational preambles (e.g., "Return only the code block. Do not include chat explanations.").
+
+---
+
+## 3. Structural Output Prompts
+
+Due to its dense architecture, Qwen 2.5 72B complies well with structured validation rules:
+* Include brief, few-shot markdown tables or JSON mock objects inside the user prompt to establish layout consistency.
+* Use triple backticks (`````) or XML wrappers to cleanly separate instruction parameters from raw datasets.

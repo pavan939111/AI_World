@@ -1,55 +1,98 @@
-﻿---
-title: Claude-3-7-Sonnet â€” API
+---
+title: Claude 3.7 Sonnet — API Reference
 service: 01-Language-Models
 model: Claude-3-7-Sonnet
 section: 03-Models
 file: API.md
 last_updated: 2026-07-28
-tags: [language-models, claude-3-7-sonnet, api]
+tags: [language-models, claude-3-7-sonnet, api, endpoint]
 author: Antigravity AI Knowledge Engine
 ---
 
-# Claude-3-7-Sonnet â€” API
+# Claude 3.7 Sonnet — API Reference
 
-## Model Specification: Claude-3-7-Sonnet
-- **Model Name**: Claude-3-7-Sonnet
-- **Primary Developer / Provider**: SOTA AI Provider
-- **Model Family**: Large Language Model Series
-- **Architecture**: Decoder-Only Transformer / Mixture-of-Experts (MoE)
-- **Context Window**: 128,000 to 2,000,000 tokens
-- **API Availability**: Official REST API, Python SDK, Cloud Ecosystems
+Direct REST API endpoints, HTTP header configurations, and payload definitions for Claude 3.7 Sonnet.
 
-## API Detailed Breakdown
+---
 
-### Key Specifications & Highlights
-- **Reasoning & Instruction Following**: SOTA benchmark scores.
-- **Multilingual Support**: High precision across 50+ natural languages.
-- **Tool Use & Function Calling**: Native JSON schema enforcement.
+## 1. Messages Endpoint
 
-### Technical Performance Analysis
-1. **Strengths**: Exceptional reasoning, low latency, robust developer tooling.
-2. **Weaknesses**: Token pricing for high-volume enterprise ingestion.
-3. **Best Use Cases**: Enterprise RAG, agentic workflows, customer service, automated code writing.
+Generates assistant responses for conversational prompts, vision ingestion, or tool schemas.
 
-## Code Example (Claude-3-7-Sonnet API Request)
-`python
-import os
-from openai import OpenAI
+* **HTTP Method**: `POST`
+* **Endpoint URL**: `https://api.anthropic.com/v1/messages`
+* **Headers Required**:
+  * `x-api-key`: `ANTHROPIC_API_KEY`
+  * `anthropic-version`: `2023-06-01`
+  * `content-type`: `application/json`
 
-client = OpenAI(api_key=os.environ.get("API_KEY"))
+### Request Payload Schema (Standard Mode)
+```json
+{
+  "model": "claude-3-7-sonnet-20250219",
+  "max_tokens": 1024,
+  "messages": [
+    {
+      "role": "user",
+      "content": "Generate a visual wireframe coordinate map."
+    }
+  ]
+}
+```
 
-response = client.chat.completions.create(
-    model="claude-3-7-sonnet",
-    messages=[
-        {"role": "system", "content": "You are a helpful AI assistant."},
-        {"role": "user", "content": "Provide a technical summary of Claude-3-7-Sonnet capabilities."}
-    ],
-    temperature=0.7,
-    max_tokens=1000
-)
+### Response Payload Schema
+```json
+{
+  "id": "msg_013Z...",
+  "type": "message",
+  "role": "assistant",
+  "content": [
+    {
+      "type": "text",
+      "text": "Here is the coordinate map..."
+    }
+  ],
+  "model": "claude-3-7-sonnet-20250219",
+  "stop_reason": "end_turn",
+  "stop_sequence": null,
+  "usage": {
+    "input_tokens": 15,
+    "output_tokens": 30
+  }
+}
+```
 
-print(response.choices[0].message.content)
-`
+---
 
-## Related Models & Alternatives
-- See [08-Comparisons](../08-Comparisons/Decision-Matrix.md) for side-by-side performance benchmarks.
+## 2. Event-Stream Streaming
+
+Setting `"stream": true` returns incremental content chunks using Server-Sent Events (SSE).
+
+* **Header**: `Content-Type: text/event-stream`
+* **Response Events Structure**:
+  * `message_start`: Returns message metadata.
+  * `content_block_start`: Defines the start of a content block (e.g. `thinking` block or `text` block).
+  * `content_block_delta`: Returns incremental token chunks. When `thinking` is active, delta returns thinking chunks before returning standard text.
+  * `message_stop`: Declares execution completion.
+
+---
+
+## 3. Error Classification
+
+Anthropic APIs report issues using standard HTTP status codes accompanied by JSON error bodies:
+
+* **`400 Bad Request`**: Invalid parameter configuration (e.g., setting a temperature of 0.5 when thinking is enabled).
+* **`403 Forbidden`**: Blocked country or invalid keys.
+* **`429 Rate Limit Exceeded`**: Token or request limit hit.
+* **`529 Service Overloaded`**: Anthropic servers are overloaded.
+
+### JSON Error Structure
+```json
+{
+  "type": "error",
+  "error": {
+    "type": "overloaded_error",
+    "message": "Anthropic API is temporarily overloaded. Please try again later."
+  }
+}
+```

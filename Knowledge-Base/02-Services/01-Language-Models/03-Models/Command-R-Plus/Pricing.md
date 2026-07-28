@@ -1,55 +1,47 @@
-﻿---
-title: Command-R-Plus â€” Pricing
+---
+title: Command R+ — Pricing & Hosting Economics
 service: 01-Language-Models
 model: Command-R-Plus
 section: 03-Models
 file: Pricing.md
 last_updated: 2026-07-28
-tags: [language-models, command-r-plus, pricing]
+tags: [language-models, command-r-plus, pricing, cost]
 author: Antigravity AI Knowledge Engine
 ---
 
-# Command-R-Plus â€” Pricing
+# Command R+ — Pricing & Hosting Economics
 
-## Model Specification: Command-R-Plus
-- **Model Name**: Command-R-Plus
-- **Primary Developer / Provider**: SOTA AI Provider
-- **Model Family**: Large Language Model Series
-- **Architecture**: Decoder-Only Transformer / Mixture-of-Experts (MoE)
-- **Context Window**: 128,000 to 2,000,000 tokens
-- **API Availability**: Official REST API, Python SDK, Cloud Ecosystems
+An overview of local weight licensing structures, hardware configurations, and Cohere platform serverless API pricing.
 
-## Pricing Detailed Breakdown
+---
 
-### Key Specifications & Highlights
-- **Reasoning & Instruction Following**: SOTA benchmark scores.
-- **Multilingual Support**: High precision across 50+ natural languages.
-- **Tool Use & Function Calling**: Native JSON schema enforcement.
+## 1. Licensing & Local Hosting Infrastructure
 
-### Technical Performance Analysis
-1. **Strengths**: Exceptional reasoning, low latency, robust developer tooling.
-2. **Weaknesses**: Token pricing for high-volume enterprise ingestion.
-3. **Best Use Cases**: Enterprise RAG, agentic workflows, customer service, automated code writing.
+Cohere releases Command R+ weights under dual terms:
 
-## Code Example (Command-R-Plus API Request)
-`python
-import os
-from openai import OpenAI
+* **Cohere Non-Commercial License (C-UDA)**:
+  * Cost: **Free ($0.00)**.
+  * Scope: Permitted for research, educational projects, testing, and private evaluation work.
+* **Commercial Enterprise Licensing**:
+  * Cost: Requires custom negotiation contracts directly with Cohere's enterprise division.
+  * Scope: Required to use weights for commercial production deployment or integration into commercial services.
+* **Local Hardware Profile**: Servicing the 104 Billion parameter weights locally requires **~208 GB VRAM** for FP16 configurations, requiring multi-GPU servers (e.g. 4x A100 or H100 GPU clusters).
 
-client = OpenAI(api_key=os.environ.get("API_KEY"))
+---
 
-response = client.chat.completions.create(
-    model="command-r-plus",
-    messages=[
-        {"role": "system", "content": "You are a helpful AI assistant."},
-        {"role": "user", "content": "Provide a technical summary of Command-R-Plus capabilities."}
-    ],
-    temperature=0.7,
-    max_tokens=1000
-)
+## 2. Serverless API Pricing (Cohere Cloud)
 
-print(response.choices[0].message.content)
-`
+For organizations choosing managed hosting, Cohere endpoints are priced per 1 Million tokens:
 
-## Related Models & Alternatives
-- See [08-Comparisons](../08-Comparisons/Decision-Matrix.md) for side-by-side performance benchmarks.
+| API Tier | Input Price (per 1M tokens) | Output Price (per 1M tokens) | Details |
+| :--- | :--- | :--- | :--- |
+| **Cohere Platform API** | **$2.50** | **$10.00** | Accessed via model string `command-r-plus`. |
+
+---
+
+## 3. Alternative Cloud Provider Pricing
+
+Third-party serverless cloud hosts (e.g. Together AI, AWS SageMaker) also host the model:
+
+* **Together AI Serverless**: Input: **$2.50** / Output: **$10.00** per 1M tokens.
+* **AWS SageMaker Marketplace**: Subject to regional server instances and hourly compute configurations.

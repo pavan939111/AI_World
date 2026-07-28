@@ -1,55 +1,43 @@
-﻿---
-title: Llama-3-3-70B â€” Capabilities
+---
+title: Llama 3.3 70B — Capabilities
 service: 01-Language-Models
 model: Llama-3-3-70B
 section: 03-Models
 file: Capabilities.md
 last_updated: 2026-07-28
-tags: [language-models, llama-3-3-70b, capabilities]
+tags: [language-models, llama-3-3-70b, capabilities, benchmarks]
 author: Antigravity AI Knowledge Engine
 ---
 
-# Llama-3-3-70B â€” Capabilities
+# Llama 3.3 70B — Capabilities
 
-## Model Specification: Llama-3-3-70B
-- **Model Name**: Llama-3-3-70B
-- **Primary Developer / Provider**: SOTA AI Provider
-- **Model Family**: Large Language Model Series
-- **Architecture**: Decoder-Only Transformer / Mixture-of-Experts (MoE)
-- **Context Window**: 128,000 to 2,000,000 tokens
-- **API Availability**: Official REST API, Python SDK, Cloud Ecosystems
+Llama 3.3 70B delivers advanced performance across coding, math, multilingual chat, and structured data generation tasks, matching or exceeding older commercial closed API models.
 
-## Capabilities Detailed Breakdown
+---
 
-### Key Specifications & Highlights
-- **Reasoning & Instruction Following**: SOTA benchmark scores.
-- **Multilingual Support**: High precision across 50+ natural languages.
-- **Tool Use & Function Calling**: Native JSON schema enforcement.
+## 1. Core Technical Capabilities
 
-### Technical Performance Analysis
-1. **Strengths**: Exceptional reasoning, low latency, robust developer tooling.
-2. **Weaknesses**: Token pricing for high-volume enterprise ingestion.
-3. **Best Use Cases**: Enterprise RAG, agentic workflows, customer service, automated code writing.
+* **Software Engineering & Coding**: Demonstrates high proficiency in code generation, debugging, refactoring, and multi-file code parsing. Optimized for integration into coding assistants.
+* **Instruction Following**: Exceptional compliance with system rules, formatting instructions, and structured schema requirements (such as forced JSON formats).
+* **Multilingual Dialogue**: Native support for conversational interaction across 8 primary languages (English, German, French, Italian, Portuguese, Hindi, Spanish, Thai) and secondary support for dozens of other languages.
+* **Agentic Workflows**: High accuracy in tool use calls, function definitions parsing, and multi-step reasoning cycles.
 
-## Code Example (Llama-3-3-70B API Request)
-`python
-import os
-from openai import OpenAI
+---
 
-client = OpenAI(api_key=os.environ.get("API_KEY"))
+## 2. Cognitive & Logic Benchmarks
 
-response = client.chat.completions.create(
-    model="llama-3-3-70b",
-    messages=[
-        {"role": "system", "content": "You are a helpful AI assistant."},
-        {"role": "user", "content": "Provide a technical summary of Llama-3-3-70B capabilities."}
-    ],
-    temperature=0.7,
-    max_tokens=1000
-)
+### Benchmark Performance Summary
+| Evaluation Metric | Benchmark Score | Target Capability Evaluated |
+| :--- | :--- | :--- |
+| **MMLU** | 86.0% | Multitask general academic knowledge. |
+| **MATH** | 68.0% | Multi-step mathematical reasoning. |
+| **GPQA** | 41.0% | PhD-level scientific logic queries. |
+| **HumanEval** | 88.0% | Python coding syntax generation. |
+| **Llama-3.3-70B-Instruct** | SOTA open-weights tier | Human preference evaluations (Chatbot Arena). |
 
-print(response.choices[0].message.content)
-`
+---
 
-## Related Models & Alternatives
-- See [08-Comparisons](../08-Comparisons/Decision-Matrix.md) for side-by-side performance benchmarks.
+## 3. Speed & Throughput Performance
+
+* **LPU Hardware Serving (Groq)**: When hosted on specialized LPUs, Llama 3.3 70B can achieve generation throughputs exceeding **250 to 400+ tokens per second**, with Time-to-First-Token (TTFT) latency below 50 milliseconds.
+* **Continuous GPU Batching**: Scales efficiently on standard NVIDIA clusters (using engines like vLLM), supporting high concurrency pipelines.

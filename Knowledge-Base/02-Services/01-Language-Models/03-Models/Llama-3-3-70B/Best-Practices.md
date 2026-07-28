@@ -1,55 +1,48 @@
-﻿---
-title: Llama-3-3-70B â€” Best-Practices
+---
+title: Llama 3.3 70B — Best Practices
 service: 01-Language-Models
 model: Llama-3-3-70B
 section: 03-Models
 file: Best-Practices.md
 last_updated: 2026-07-28
-tags: [language-models, llama-3-3-70b, best-practices]
+tags: [language-models, llama-3-3-70b, best-practices, optimization]
 author: Antigravity AI Knowledge Engine
 ---
 
-# Llama-3-3-70B â€” Best-Practices
+# Llama 3.3 70B — Production Best Practices
 
-## Model Specification: Llama-3-3-70B
-- **Model Name**: Llama-3-3-70B
-- **Primary Developer / Provider**: SOTA AI Provider
-- **Model Family**: Large Language Model Series
-- **Architecture**: Decoder-Only Transformer / Mixture-of-Experts (MoE)
-- **Context Window**: 128,000 to 2,000,000 tokens
-- **API Availability**: Official REST API, Python SDK, Cloud Ecosystems
+Guidelines and architecture patterns for optimizing speed, memory efficiency, and local security when deploying Llama 3.3 70B in production.
 
-## Best-Practices Detailed Breakdown
+---
 
-### Key Specifications & Highlights
-- **Reasoning & Instruction Following**: SOTA benchmark scores.
-- **Multilingual Support**: High precision across 50+ natural languages.
-- **Tool Use & Function Calling**: Native JSON schema enforcement.
+## 1. Weight Quantization Strategies
 
-### Technical Performance Analysis
-1. **Strengths**: Exceptional reasoning, low latency, robust developer tooling.
-2. **Weaknesses**: Token pricing for high-volume enterprise ingestion.
-3. **Best Use Cases**: Enterprise RAG, agentic workflows, customer service, automated code writing.
+To deploy Llama 3.3 70B without enterprise-grade hardware, developers must apply quantization compression:
 
-## Code Example (Llama-3-3-70B API Request)
-`python
-import os
-from openai import OpenAI
+* **For Server Deployment (vLLM / TGI)**:
+  * Use **AWQ (Activation-aware Weight Quantization)** or **GPTQ** in **4-bit** or **8-bit** configurations. AWQ preserves activation weights better than standard round-to-nearest quantization, maintaining high coding and math capabilities.
+* **For Local Development / Workstations (Ollama / llama.cpp)**:
+  * Use the **GGUF** format with **`Q4_K_M`** (4-bit medium) or **`Q8_0`** (8-bit) compression. `Q4_K_M` uses 4-bit quantization for attention matrices and 5-bit for feed-forward layers, balancing VRAM compression and output quality.
 
-client = OpenAI(api_key=os.environ.get("API_KEY"))
+---
 
-response = client.chat.completions.create(
-    model="llama-3-3-70b",
-    messages=[
-        {"role": "system", "content": "You are a helpful AI assistant."},
-        {"role": "user", "content": "Provide a technical summary of Llama-3-3-70B capabilities."}
-    ],
-    temperature=0.7,
-    max_tokens=1000
-)
+## 2. Multi-GPU Tensor Parallelism (TP)
 
-print(response.choices[0].message.content)
-`
+When hosting the 70B model using vLLM across multiple GPUs:
 
-## Related Models & Alternatives
-- See [08-Comparisons](../08-Comparisons/Decision-Matrix.md) for side-by-side performance benchmarks.
+* **Set Tensor Parallelism**: Configure the parameter `tensor_parallel_size` to match the number of active GPUs.
+* **Avoid Pipeline Parallelism**: Keep pipeline parallelism (`pipeline_parallel_size`) at `1` unless the model cannot fit within a single node. Tensor Parallelism splits layers horizontally within the same node, reducing latency compared to inter-node pipeline splitting.
+* **Run Commands (vLLM Example)**:
+  ```bash
+  python -m vllm.entrypoints.openai.api_server \
+      --model meta-llama/Llama-3.3-70B-Instruct \
+      --tensor-parallel-size 2 \
+      --port 8000
+  ```
+
+---
+
+## 3. Operations & API Security
+
+* **Sanitize Inputs**: Always sanitize user inputs to prevent prompt injection attacks (such as overriding system prompts using custom `<|start_header_id|>` markers).
+* **Enable Secure Boundaries**: If hosting endpoints publicly, wrap local API servers (like vLLM or Ollama) with reverse proxies (e.g., Nginx) to handle SSL certificates and API token authentication.

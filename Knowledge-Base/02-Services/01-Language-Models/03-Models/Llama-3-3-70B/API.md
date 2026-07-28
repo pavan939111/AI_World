@@ -1,55 +1,81 @@
-﻿---
-title: Llama-3-3-70B â€” API
+---
+title: Llama 3.3 70B — API Reference
 service: 01-Language-Models
 model: Llama-3-3-70B
 section: 03-Models
 file: API.md
 last_updated: 2026-07-28
-tags: [language-models, llama-3-3-70b, api]
+tags: [language-models, llama-3-3-70b, api, endpoint]
 author: Antigravity AI Knowledge Engine
 ---
 
-# Llama-3-3-70B â€” API
+# Llama 3.3 70B — API Reference
 
-## Model Specification: Llama-3-3-70B
-- **Model Name**: Llama-3-3-70B
-- **Primary Developer / Provider**: SOTA AI Provider
-- **Model Family**: Large Language Model Series
-- **Architecture**: Decoder-Only Transformer / Mixture-of-Experts (MoE)
-- **Context Window**: 128,000 to 2,000,000 tokens
-- **API Availability**: Official REST API, Python SDK, Cloud Ecosystems
+Configuration parameters and endpoint structures for Llama 3.3 70B.
 
-## API Detailed Breakdown
+---
 
-### Key Specifications & Highlights
-- **Reasoning & Instruction Following**: SOTA benchmark scores.
-- **Multilingual Support**: High precision across 50+ natural languages.
-- **Tool Use & Function Calling**: Native JSON schema enforcement.
+## 1. OpenAI Compatibility Layer
 
-### Technical Performance Analysis
-1. **Strengths**: Exceptional reasoning, low latency, robust developer tooling.
-2. **Weaknesses**: Token pricing for high-volume enterprise ingestion.
-3. **Best Use Cases**: Enterprise RAG, agentic workflows, customer service, automated code writing.
+Most inference hosting engines (vLLM, Ollama, Groq, Together) expose a REST API that matches OpenAI's schema. This allows developers to use the standard `openai` SDK library simply by overriding the `base_url` configurations.
 
-## Code Example (Llama-3-3-70B API Request)
-`python
-import os
-from openai import OpenAI
+* **HTTP Method**: `POST`
+* **Route Path**: `/v1/chat/completions`
+* **Base URL Example (vLLM)**: `http://localhost:8000/v1`
 
-client = OpenAI(api_key=os.environ.get("API_KEY"))
+### Request Payload Schema
+```json
+{
+  "model": "meta-llama/Llama-3.3-70B-Instruct",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are a factual dictionary bot."
+    },
+    {
+      "role": "user",
+      "content": "Define 'GQA'."
+    }
+  ],
+  "temperature": 0.6,
+  "max_tokens": 512
+}
+```
 
-response = client.chat.completions.create(
-    model="llama-3-3-70b",
-    messages=[
-        {"role": "system", "content": "You are a helpful AI assistant."},
-        {"role": "user", "content": "Provide a technical summary of Llama-3-3-70B capabilities."}
-    ],
-    temperature=0.7,
-    max_tokens=1000
-)
+### Response Payload Structure
+```json
+{
+  "id": "chatcmpl-123",
+  "object": "chat.completion",
+  "created": 1785239582,
+  "model": "meta-llama/Llama-3.3-70B-Instruct",
+  "choices": [
+    {
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "GQA stands for Grouped-Query Attention..."
+      },
+      "finish_reason": "stop"
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 20,
+    "completion_tokens": 15,
+    "total_tokens": 35
+  }
+}
+```
 
-print(response.choices[0].message.content)
-`
+---
 
-## Related Models & Alternatives
-- See [08-Comparisons](../08-Comparisons/Decision-Matrix.md) for side-by-side performance benchmarks.
+## 2. Server-Sent Events (SSE) Streaming
+
+Passing `"stream": true` yields chunked response payloads:
+
+* **Event Headers**: `Content-Type: text/event-stream`
+* **Data Chunk Payload**:
+```json
+data: {"id":"chatcmpl-123","object":"chat.completion.chunk","created":1785239582,"model":"meta-llama/Llama-3.3-70B-Instruct","choices":[{"index":0,"delta":{"content":"GQA"},"finish_reason":null}]}
+```
+* **Terminator**: `data: [DONE]`

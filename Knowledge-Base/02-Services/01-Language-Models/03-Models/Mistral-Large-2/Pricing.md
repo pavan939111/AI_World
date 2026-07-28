@@ -1,55 +1,47 @@
-﻿---
-title: Mistral-Large-2 â€” Pricing
+---
+title: Mistral-Large-2 — Pricing & Licensing
 service: 01-Language-Models
 model: Mistral-Large-2
 section: 03-Models
 file: Pricing.md
 last_updated: 2026-07-28
-tags: [language-models, mistral-large-2, pricing]
+tags: [language-models, mistral-large-2, pricing, licensing, cost]
 author: Antigravity AI Knowledge Engine
 ---
 
-# Mistral-Large-2 â€” Pricing
+# Mistral-Large-2 — Pricing & Hosting Economics
 
-## Model Specification: Mistral-Large-2
-- **Model Name**: Mistral-Large-2
-- **Primary Developer / Provider**: SOTA AI Provider
-- **Model Family**: Large Language Model Series
-- **Architecture**: Decoder-Only Transformer / Mixture-of-Experts (MoE)
-- **Context Window**: 128,000 to 2,000,000 tokens
-- **API Availability**: Official REST API, Python SDK, Cloud Ecosystems
+Mistral-Large-2 features a dual licensing structure. Access is split between local hosting models or utilizing serverless cloud APIs.
 
-## Pricing Detailed Breakdown
+---
 
-### Key Specifications & Highlights
-- **Reasoning & Instruction Following**: SOTA benchmark scores.
-- **Multilingual Support**: High precision across 50+ natural languages.
-- **Tool Use & Function Calling**: Native JSON schema enforcement.
+## 1. Local Serving & Licensing Structures
 
-### Technical Performance Analysis
-1. **Strengths**: Exceptional reasoning, low latency, robust developer tooling.
-2. **Weaknesses**: Token pricing for high-volume enterprise ingestion.
-3. **Best Use Cases**: Enterprise RAG, agentic workflows, customer service, automated code writing.
+Because Mistral AI distributes model weights open-access, local deployment depends on the licensing category:
 
-## Code Example (Mistral-Large-2 API Request)
-`python
-import os
-from openai import OpenAI
+* **Mistral Research License (MRL)**: 
+  * Cost: **Free ($0.00)**.
+  * Allowable Scope: Strictly limited to research, evaluation, and non-commercial educational operations.
+* **Commercial License**:
+  * Cost: Requires custom enterprise contract agreements with Mistral AI.
+  * Scope: Required to run weights for commercial, customer-facing, or paid business hosting.
+* **Local VRAM Hardware requirements (FP16)**: Requires **~246 GB VRAM** (minimum of 8x A100 80GB or 4x H100 GPUs), which represents a high upfront infrastructure cost.
 
-client = OpenAI(api_key=os.environ.get("API_KEY"))
+---
 
-response = client.chat.completions.create(
-    model="mistral-large-2",
-    messages=[
-        {"role": "system", "content": "You are a helpful AI assistant."},
-        {"role": "user", "content": "Provide a technical summary of Mistral-Large-2 capabilities."}
-    ],
-    temperature=0.7,
-    max_tokens=1000
-)
+## 2. Serverless API Pricing (Mistral La Plateforme)
 
-print(response.choices[0].message.content)
-`
+For projects using managed endpoints, Mistral AI hosts the model on their cloud platform. Rates are calculated per 1 Million tokens:
 
-## Related Models & Alternatives
-- See [08-Comparisons](../08-Comparisons/Decision-Matrix.md) for side-by-side performance benchmarks.
+| API Tier | Input Price (per 1M tokens) | Output Price (per 1M tokens) | Details |
+| :--- | :--- | :--- | :--- |
+| **Mistral La Plateforme** | **$2.00** | **$6.00** | Accessed via model string `mistral-large-latest`. |
+
+---
+
+## 3. Alternative Cloud Provider Pricing
+
+Third-party API providers also host Mistral-Large-2 under serverless models:
+
+* **Together AI**: Input: **$2.00** / Output: **$6.00** per 1M tokens.
+* **Fireworks AI**: Input: **$2.00** / Output: **$6.00** per 1M tokens.

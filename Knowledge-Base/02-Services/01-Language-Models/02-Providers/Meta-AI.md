@@ -1,52 +1,49 @@
-﻿---
-title: Language Models â€” Meta-AI
+---
+title: Language Models — Meta AI
 service: 01-Language-Models
 section: 02-Providers
 file: Meta-AI.md
 last_updated: 2026-07-28
-tags: [language-models, llm, 02-providers, meta-ai]
+tags: [language-models, llm, providers, meta, llama]
 author: Antigravity AI Knowledge Engine
 ---
 
-# Meta-AI
+# Meta AI Provider Profile
 
-## Executive Summary
-Detailed technical breakdown of **Meta-AI** within the **02-Providers** domain of Large Language Models (LLMs).
+**Meta AI** (a division of Meta Platforms, Inc.) is the primary pioneer of open-weights Large Language Models. By releasing model weights under permissive commercial licenses, Meta catalyzed the open-source developer ecosystem, enabling local execution, custom fine-tuning, and independent hosting.
 
-## Key Concepts & Architecture
-- **Domain**: Large Language Models & Natural Language Processing
-- **Core Technology**: Decoder-Only Transformers, Mixture-of-Experts (MoE), Attention Mechanisms (FlashAttention-3, RoPE)
-- **Industry Standard**: Modern LLM pipelines serving token completions with low Time-to-First-Token (TTFT) and high throughput (tok/s).
+---
 
-## Detailed Analysis
-1. **Technical Foundation**: How Meta-AI optimizes context retrieval, reasoning depth, instruction following, and output generation.
-2. **Production Application**: Best practices for integrating Meta-AI into enterprise applications.
-3. **Trade-offs**: Evaluating context window size vs. processing latency, API token pricing vs. open-weights self-hosting.
+## 1. Core Model Roster (Llama Family)
 
-## Best Practices
-- Benchmark using standardized evaluation frameworks (MMLU, GPQA, Chatbot Arena).
-- Configure temperature (.2 - 0.7$) based on output requirements (factual vs creative).
-- Utilize prompt caching for repeated long-context system prompts to reduce cost by up to 50%.
+Meta's model family, **LLaMA** (Large Language Model Meta AI), has evolved through multiple iterations:
 
-## Code / Configuration Example
-`python
-import os
-from openai import OpenAI
+* **Llama 3.3 (70B)**: The current production workhorse. It features a 128k context window, a 128k vocabulary tokenizer, and achieves performance competitive with older closed models at a fraction of the hosting scale.
+* **Llama 3.2 (Edge & Vision)**: Meta's multimodal and lightweight family. It includes:
+  * **11B & 90B Vision Models**: Support image inputs alongside text.
+  * **1B & 3B Lightweight Models**: Optimized to run locally on mobile devices and edge hardware.
+* **Llama 3.1 (8B, 70B, 405B)**: Introduced the 128k context length, Grouped-Query Attention (GQA), and the massive 405B parameter model designed for synthetic data generation and distillation.
+* **Llama 1 & 2 (Legacy)**: The initial open-weights models that established the open-source ecosystem.
 
-client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+---
 
-response = client.chat.completions.create(
-    model="gpt-4o",
-    messages=[
-        {"role": "system", "content": "You are an expert AI software architect."},
-        {"role": "user", "content": "Explain Meta-AI in the context of production LLM deployment."}
-    ],
-    temperature=0.3,
-    max_tokens=1000
-)
+## 2. Key Developer Features
 
-print(response.choices[0].message.content)
-`
+Meta’s open approach provides developers with capabilities unavailable in closed APIs:
 
-## Related References
-- See [00-Overview](./00-Overview/README.md) and [08-Comparisons](./08-Comparisons/README.md) for decision matrices.
+* **Complete Weights Control**: Developers can download the raw weights (`.safetensors` files) and run them locally, on private clouds, or edge hardware, ensuring absolute data privacy.
+* **Permissive Licensing**: The Llama 3 license allows free commercial use for products with up to 700 million monthly active users, making it accessible for startups and enterprise platforms alike.
+* **Quantization & Local Serving**: Because weights are open, the community compiles them into various quantized formats (e.g., GGUF for local CPU/GPU offloading, AWQ/GPTQ for fast GPU hosting), allowing a 70B model to run on a single workstation or a 3B model to run on a standard laptop.
+* **Custom Fine-Tuning**: Open weights enable developers to train Llama models on proprietary data using Parameter-Efficient Fine-Tuning (PEFT) methods like LoRA and QLoRA without sending training data to external API servers.
+
+---
+
+## 3. Deployment Methods
+
+Llama models are hosted using open-source serving architectures rather than proprietary endpoints:
+
+* **Local Inference (Ollama / llama.cpp)**: Allows running Llama models on consumer laptops (macOS/Windows/Linux) using GGUF format:
+  ```bash
+  ollama run llama3.3
+  ```
+* **Production Serving (vLLM / TensorRT-LLM)**: Serves Llama models on GPU nodes using continuous batching and PagedAttention, exposing an OpenAI-compatible API layer.

@@ -1,60 +1,56 @@
-﻿---
-title: Reasoning Models â€” History
+---
+title: Reasoning Models — History
 service: 02-Reasoning-Models
 section: 00-Overview
 file: History.md
 last_updated: 2026-07-28
-tags: [reasoning-models, deepseek-r1, o1, cot, 00-overview, history]
+tags: [reasoning-models, history, timeline, evolution]
 author: Antigravity AI Knowledge Engine
 ---
 
-# History
+# History of AI Reasoning Models
 
-## Executive Summary
-Detailed technical breakdown of **History** within the **00-Overview** domain of AI Reasoning Models (Chain-of-Thought / Test-Time Compute Scaling).
+The development of reasoning models represents the convergence of deep search methods, reinforcement learning algorithms, and large language model architectures.
 
-## Key Concepts & Architecture
-- **Domain**: AI Reasoning & Complex Problem Solving
-- **Core Technology**: Reinforcement Learning (RLAIF / GRPO), Test-Time Compute Scaling, Hidden Chain-of-Thought (CoT) Thinking Tokens, Process Reward Models (PRMs).
-- **Industry Standard**: Models that dynamically allocate extra computation time ("thinking") before producing a final answer, achieving SOTA accuracy on AIME 2024 Math, MATH-500, Codeforces, and GPQA.
+---
 
-## Detailed Analysis
-1. **Technical Foundation**: How History optimizes test-time compute, error backtracking, self-correction, and logical verification.
-2. **Production Application**: Best practices for integrating reasoning models into automated code generators, mathematical engines, and multi-step analytical software.
-3. **Trade-offs**: Evaluating extended generation latency (10s - 60s thinking time) vs. output accuracy, and reasoning token cost vs. standard LLMs.
+## 1. Timeline of Key Milestones
 
-## Best Practices
-- **Minimalist Prompting**: Do NOT instruct reasoning models to "think step by step" (they do this natively via reinforcement learning). State the problem clearly and concisely.
-- **Reasoning Effort Selection**: Adjust easoning_effort (low, medium, high) or max_completion_tokens based on task difficulty to control cost and latency.
-- **Handling Reasoning Tokens**: Parse <think> tags (DeepSeek-R1) or easoning_tokens metadata (OpenAI o1/o3-mini) separately from final output text.
+The historical progression of logic-grounded AI systems:
 
-## Code / Configuration Example (DeepSeek-R1 / OpenAI o3-mini)
-`python
-import os
-from openai import OpenAI
+```mermaid
+timeline
+    title Evolution of AI Reasoning Systems
+    2016 : AlphaGo (MCTS + RL) : MCTS graph search + policy networks beat Go world champions.
+    2022 : CoT Prompting (Wei et al.) : "Let's think step by step" prompt unlocks LLM logical planning.
+    2022 : STaR Framework (Zelikman et al.) : Self-Taught Reasoner uses rationales to boost training datasets.
+    2024 : OpenAI o1-preview : OpenAI releases first native test-time compute reasoning APIs.
+    2025 : DeepSeek-R1-Zero : First state-of-the-art open-weights model using pure RL (no SFT baseline).
+```
 
-# Initialize client for Reasoning Model Inference
-client = OpenAI(
-    base_url="https://api.deepseek.com",
-    api_key=os.environ.get("DEEPSEEK_API_KEY")
-)
+---
 
-response = client.chat.completions.create(
-    model="deepseek-reasoner",
-    messages=[
-        {"role": "user", "content": "Solve the mathematical equation: Prove that there are infinitely many prime numbers using proof by contradiction."}
-    ]
-)
+## 2. Deep Search Origins (Pre-LLM Era)
 
-# Access reasoning content (<think> tokens) and final answer
-reasoning_content = response.choices[0].message.reasoning_content
-final_answer = response.choices[0].message.content
+Before LLMs, logical reasoning in AI was managed by search algorithms combined with neural networks:
 
-print("Thinking Process Snippet:")
-print(reasoning_content[:200])
-print("\nFinal Answer:")
-print(final_answer[:200])
-`
+* **Monte Carlo Tree Search (MCTS)**: Used in systems like AlphaGo (DeepMind, 2016) to explore a tree of potential moves. Combined with reinforcement learning policy networks, this enabled search-based strategic planning.
+* **Limitations**: Highly domain-specific (e.g. chess, Go, chess boards). These search structures could not scale to generalized natural language tasks.
 
-## Related References
-- See [00-Overview](./00-Overview/README.md) and [08-Comparisons](./08-Comparisons/README.md) for decision matrices.
+---
+
+## 3. The LLM Prompting Era (2022–2023)
+
+As autoregressive transformers (GPT-3/PaLM) scaled:
+
+* **Chain-of-Thought (CoT) Prompting**: Wei et al. (Google, 2022) demonstrated that forcing models to output intermediate reasoning steps (*rationales*) before the final answer significantly increased performance on arithmetic and symbolic tasks.
+* **STaR (Self-Taught Reasoner)**: Zelikman et al. (Stanford, 2022) showed that models could generate their own rationales, filter out the incorrect paths based on final answers, and fine-tune on the correct rationales to self-improve.
+
+---
+
+## 4. Native Reinforcement Learning (2024–Present)
+
+The integration of reinforcement learning with LLM training:
+
+* **OpenAI o1**: Released September 2024, demonstrating state-of-the-art performance on competitive programming and PhD-level science logic using undisclosed reinforcement learning methods.
+* **DeepSeek-R1-Zero**: Released January 2025, demonstrating that a model trained using **pure reinforcement learning (GRPO)** without a prior Supervised Fine-Tuning (SFT) dataset could discover reasoning, backtracking, and self-correction behaviors completely natively.

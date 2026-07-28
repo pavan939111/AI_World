@@ -1,52 +1,66 @@
-﻿---
-title: Language Models â€” Anthropic
+---
+title: Language Models — Anthropic
 service: 01-Language-Models
 section: 02-Providers
 file: Anthropic.md
 last_updated: 2026-07-28
-tags: [language-models, llm, 02-providers, anthropic]
+tags: [language-models, llm, providers, anthropic, claude]
 author: Antigravity AI Knowledge Engine
 ---
 
-# Anthropic
+# Anthropic Provider Profile
 
-## Executive Summary
-Detailed technical breakdown of **Anthropic** within the **02-Providers** domain of Large Language Models (LLMs).
+**Anthropic** is an AI safety and research company founded in 2021 by former OpenAI researchers (including Dario and Daniela Amodei). Anthropic is known for its focus on structural AI alignment, safety research (introducing **Constitutional AI**), and long-context capabilities.
 
-## Key Concepts & Architecture
-- **Domain**: Large Language Models & Natural Language Processing
-- **Core Technology**: Decoder-Only Transformers, Mixture-of-Experts (MoE), Attention Mechanisms (FlashAttention-3, RoPE)
-- **Industry Standard**: Modern LLM pipelines serving token completions with low Time-to-First-Token (TTFT) and high throughput (tok/s).
+---
 
-## Detailed Analysis
-1. **Technical Foundation**: How Anthropic optimizes context retrieval, reasoning depth, instruction following, and output generation.
-2. **Production Application**: Best practices for integrating Anthropic into enterprise applications.
-3. **Trade-offs**: Evaluating context window size vs. processing latency, API token pricing vs. open-weights self-hosting.
+## 1. Core Model Roster (Claude Family)
 
-## Best Practices
-- Benchmark using standardized evaluation frameworks (MMLU, GPQA, Chatbot Arena).
-- Configure temperature (.2 - 0.7$) based on output requirements (factual vs creative).
-- Utilize prompt caching for repeated long-context system prompts to reduce cost by up to 50%.
+Anthropic’s model family, **Claude**, is categorized into three capability tiers:
 
-## Code / Configuration Example
-`python
-import os
-from openai import OpenAI
+* **Claude 3.7 Sonnet**: The state-of-the-art model. It features a hybrid reasoning execution engine, allowing developers to configure the model to run in either "standard mode" (fast generation) or "thinking mode" (allocating test-time compute to run deliberate reasoning steps before outputting).
+* **Claude 3.5 Sonnet**: Previous flagship model, highly regarded for coding, system architecture, logic, and long-form writing.
+* **Claude 3.5 Haiku**: Extremely fast and cost-effective text model, providing low-latency performance matching older large models (like Claude 3 Opus).
+* **Claude 3 Opus**: A larger, older model designed for highly complex cognitive tasks.
 
-client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+---
 
-response = client.chat.completions.create(
-    model="gpt-4o",
-    messages=[
-        {"role": "system", "content": "You are an expert AI software architect."},
-        {"role": "user", "content": "Explain Anthropic in the context of production LLM deployment."}
-    ],
-    temperature=0.3,
-    max_tokens=1000
-)
+## 2. Key Developer Features
 
-print(response.choices[0].message.content)
-`
+Anthropic's Developer Console (`console.anthropic.com`) offers several distinct capabilities:
 
-## Related References
-- See [00-Overview](./00-Overview/README.md) and [08-Comparisons](./08-Comparisons/README.md) for decision matrices.
+* **Manual Prompt Caching**: Unlike OpenAI's automatic caching, Anthropic allows developers to explicitly set breakpoints (`"cache_control": {"type": "ephemeral"}`) in their system prompts, document injections, or chat histories. This supports caching up to 4 separate segments, offering up to a 90% cost reduction on input tokens and up to a 2x reduction in latency.
+* **Computer Use**: A feature of Claude 3.5/3.7 Sonnet that enables the model to interact directly with OS environments. Claude can take screenshots, click buttons, type keys, and run shell commands in an agentic loop, translating natural language requests into computer GUI interactions.
+* **XML Tag Optimization**: Anthropic models are trained to utilize XML tags (e.g., `<thinking>`, `<context>`, `<output>`) to structure information. Using XML tags in prompts reduces formatting errors and improves compliance with complex instructions.
+
+---
+
+## 3. Integration Standards
+
+Anthropic uses its own API structure, though third-party services often map it to standard formats.
+
+### Request Payload Example (`/v1/messages`)
+```json
+{
+  "model": "claude-3-7-sonnet-20250219",
+  "max_tokens": 1024,
+  "system": [
+    {
+      "type": "text",
+      "text": "You are a software tester. Analyze the code blocks using XML tags.",
+      "cache_control": {"type": "ephemeral"}
+    }
+  ],
+  "messages": [
+    {
+      "role": "user",
+      "content": "Verify the sorting algorithm in this python script: [script contents...]"
+    }
+  ],
+  "thinking": {
+    "type": "enabled",
+    "budget_tokens": 1024
+  }
+}
+```
+* **Constitutional AI**: Unlike standard RLHF which relies on human evaluation, Anthropic's alignment training aligns models using a written "constitution" (a set of safety principles), making the alignment process transparent and steerable.

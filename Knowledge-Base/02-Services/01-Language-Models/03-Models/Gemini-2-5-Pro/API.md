@@ -1,55 +1,104 @@
-﻿---
-title: Gemini-2-5-Pro â€” API
+---
+title: Gemini 2.5 Pro — API Reference
 service: 01-Language-Models
 model: Gemini-2-5-Pro
 section: 03-Models
 file: API.md
 last_updated: 2026-07-28
-tags: [language-models, gemini-2-5-pro, api]
+tags: [language-models, gemini-2-5-pro, api, endpoint]
 author: Antigravity AI Knowledge Engine
 ---
 
-# Gemini-2-5-Pro â€” API
+# Gemini 2.5 Pro — API Reference
 
-## Model Specification: Gemini-2-5-Pro
-- **Model Name**: Gemini-2-5-Pro
-- **Primary Developer / Provider**: SOTA AI Provider
-- **Model Family**: Large Language Model Series
-- **Architecture**: Decoder-Only Transformer / Mixture-of-Experts (MoE)
-- **Context Window**: 128,000 to 2,000,000 tokens
-- **API Availability**: Official REST API, Python SDK, Cloud Ecosystems
+Direct REST API endpoints and HTTP payload schemas for interacting with Gemini 2.5 Pro.
 
-## API Detailed Breakdown
+---
 
-### Key Specifications & Highlights
-- **Reasoning & Instruction Following**: SOTA benchmark scores.
-- **Multilingual Support**: High precision across 50+ natural languages.
-- **Tool Use & Function Calling**: Native JSON schema enforcement.
+## 1. Google AI Studio Endpoints
 
-### Technical Performance Analysis
-1. **Strengths**: Exceptional reasoning, low latency, robust developer tooling.
-2. **Weaknesses**: Token pricing for high-volume enterprise ingestion.
-3. **Best Use Cases**: Enterprise RAG, agentic workflows, customer service, automated code writing.
+* **HTTP Method**: `POST`
+* **URL Structure**:
+  `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key=YOUR_API_KEY`
+* **Headers**: `Content-Type: application/json`
 
-## Code Example (Gemini-2-5-Pro API Request)
-`python
-import os
-from openai import OpenAI
+### Direct Request Payload Example
+```json
+{
+  "contents": [
+    {
+      "parts": [
+        {
+          "text": "Summarize the key findings in this document."
+        }
+      ]
+    }
+  ],
+  "generationConfig": {
+    "temperature": 0.2,
+    "maxOutputTokens": 1000
+  }
+}
+```
 
-client = OpenAI(api_key=os.environ.get("API_KEY"))
+### Standard Response Payload
+```json
+{
+  "candidates": [
+    {
+      "content": {
+        "parts": [
+          {
+            "text": "The document details..."
+          }
+        ],
+        "role": "model"
+      },
+      "finishReason": "STOP",
+      "safetyRatings": [
+        {
+          "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
+          "probability": "NEGLIGIBLE"
+        }
+      ]
+    }
+  ],
+  "usageMetadata": {
+    "promptTokenCount": 15,
+    "candidatesTokenCount": 20,
+    "totalTokenCount": 35
+  }
+}
+```
 
-response = client.chat.completions.create(
-    model="gemini-2-5-pro",
-    messages=[
-        {"role": "system", "content": "You are a helpful AI assistant."},
-        {"role": "user", "content": "Provide a technical summary of Gemini-2-5-Pro capabilities."}
-    ],
-    temperature=0.7,
-    max_tokens=1000
-)
+---
 
-print(response.choices[0].message.content)
-`
+## 2. Search Grounding Response Metadata
 
-## Related Models & Alternatives
-- See [08-Comparisons](../08-Comparisons/Decision-Matrix.md) for side-by-side performance benchmarks.
+When grounding is enabled, the API includes grounding metadata maps within the response candidates:
+
+```json
+"groundingMetadata": {
+  "webSearchQueries": [
+    "Company X quarterly financial results"
+  ],
+  "groundingChunks": [
+    {
+      "web": {
+        "uri": "https://example.com/finance",
+        "title": "Company X Financial Release"
+      }
+    }
+  ]
+}
+```
+
+---
+
+## 3. Vertex AI Cloud Configuration
+
+For Google Cloud deployments, the API shifts to the regional Vertex endpoints:
+
+* **URL Structure**:
+  `https://{REGION}-aiplatform.googleapis.com/v1/projects/{PROJECT_ID}/locations/{REGION}/publishers/google/models/gemini-2.5-pro:generateContent`
+* **Authentication**: Requires OAuth 2.0 Bearer tokens managed via Google Cloud IAM permissions, rather than static API keys.

@@ -1,60 +1,45 @@
-﻿---
-title: Reasoning Models â€” GRPO-Algorithm
+---
+title: Reasoning Models — GRPO Algorithm
 service: 02-Reasoning-Models
 section: 01-Fundamentals
 file: GRPO-Algorithm.md
 last_updated: 2026-07-28
-tags: [reasoning-models, deepseek-r1, o1, cot, 01-fundamentals, grpo-algorithm]
+tags: [reasoning-models, grpo, optimization, reinforcement-learning, algorithm]
 author: Antigravity AI Knowledge Engine
 ---
 
-# GRPO-Algorithm
+# Group Relative Policy Optimization (GRPO)
 
-## Executive Summary
-Detailed technical breakdown of **GRPO-Algorithm** within the **01-Fundamentals** domain of AI Reasoning Models (Chain-of-Thought / Test-Time Compute Scaling).
+**Group Relative Policy Optimization (GRPO)** is a highly memory-efficient reinforcement learning algorithm developed by DeepSeek. It replaces the standard Proximal Policy Optimization (PPO) framework by eliminating the need for a separate value critic network, significantly reducing GPU memory requirements during alignment training.
 
-## Key Concepts & Architecture
-- **Domain**: AI Reasoning & Complex Problem Solving
-- **Core Technology**: Reinforcement Learning (RLAIF / GRPO), Test-Time Compute Scaling, Hidden Chain-of-Thought (CoT) Thinking Tokens, Process Reward Models (PRMs).
-- **Industry Standard**: Models that dynamically allocate extra computation time ("thinking") before producing a final answer, achieving SOTA accuracy on AIME 2024 Math, MATH-500, Codeforces, and GPQA.
+---
 
-## Detailed Analysis
-1. **Technical Foundation**: How GRPO-Algorithm optimizes test-time compute, error backtracking, self-correction, and logical verification.
-2. **Production Application**: Best practices for integrating reasoning models into automated code generators, mathematical engines, and multi-step analytical software.
-3. **Trade-offs**: Evaluating extended generation latency (10s - 60s thinking time) vs. output accuracy, and reasoning token cost vs. standard LLMs.
+## 1. Traditional PPO vs. GRPO
 
-## Best Practices
-- **Minimalist Prompting**: Do NOT instruct reasoning models to "think step by step" (they do this natively via reinforcement learning). State the problem clearly and concisely.
-- **Reasoning Effort Selection**: Adjust easoning_effort (low, medium, high) or max_completion_tokens based on task difficulty to control cost and latency.
-- **Handling Reasoning Tokens**: Parse <think> tags (DeepSeek-R1) or easoning_tokens metadata (OpenAI o1/o3-mini) separately from final output text.
+| Dimension / Property | Proximal Policy Optimization (PPO) | Group Relative Policy Optimization (GRPO) |
+| :--- | :--- | :--- |
+| **Critic Architecture** | Requires a dedicated **Value Network (Critic)** to estimate state baseline rewards. | **No Critic Network**. Baseline rewards are computed dynamically from group outputs. |
+| **GPU Memory Footprint**| High (Critic model size often equals policy model size, doubling VRAM requirements). | **Low (~50% VRAM savings)**. Only the policy model and reference model are active. |
+| **Advantage Estimation**| Computed using Generalized Advantage Estimation (GAE) against the critic network. | Computed relatively using reward averages and standard deviations of a group. |
 
-## Code / Configuration Example (DeepSeek-R1 / OpenAI o3-mini)
-`python
-import os
-from openai import OpenAI
+---
 
-# Initialize client for Reasoning Model Inference
-client = OpenAI(
-    base_url="https://api.deepseek.com",
-    api_key=os.environ.get("DEEPSEEK_API_KEY")
-)
+## 2. Mathematical Formulation & Advantage Calculation
 
-response = client.chat.completions.create(
-    model="deepseek-reasoner",
-    messages=[
-        {"role": "user", "content": "Solve the mathematical equation: Prove that there are infinitely many prime numbers using proof by contradiction."}
-    ]
-)
+Instead of scoring a single generation against a value baseline, GRPO samples a group of $G$ outputs $\{q_1, q_2, \dots, q_G\}$ from the policy model $\pi_\theta$ for each input prompt:
 
-# Access reasoning content (<think> tokens) and final answer
-reasoning_content = response.choices[0].message.reasoning_content
-final_answer = response.choices[0].message.content
+1. **Grade Group Outputs**: Each output candidate $q_i$ receives a reward $r_i$ from the reward function pipeline (comprising rule-based checkers and model-based classifiers).
+2. **Calculate Group Statistical Parameters**:
+   * **Mean Reward**: $\text{mean}(R) = \frac{1}{G}\sum_{j=1}^{G} r_j$
+   * **Standard Deviation**: $\text{std}(R) = \sqrt{\frac{1}{G}\sum_{j=1}^{G} (r_j - \text{mean}(R))^2}$
+3. **Determine Relative Advantage**: The relative advantage $A_i$ of each candidate output $q_i$ is computed as:
+   $$A_i = \frac{r_i - \text{mean}(R)}{\text{std}(R)}$$
 
-print("Thinking Process Snippet:")
-print(reasoning_content[:200])
-print("\nFinal Answer:")
-print(final_answer[:200])
-`
+This relative advantage is used to update the policy parameters $\theta$. If a candidate's reward is above the group average, its policy generation probability is boosted; if below, it is penalized.
 
-## Related References
-- See [00-Overview](./00-Overview/README.md) and [08-Comparisons](./08-Comparisons/README.md) for decision matrices.
+---
+
+## 3. Benefits for Reasoning Alignment
+
+* **Saves GPU VRAM Resources**: Eliminating the critic network allows developers to train larger models (e.g. 671B MoE parameters) or use larger batch sizes on identical hardware.
+* **Fined-Grained Contrast**: Comparing multiple outputs for the same query helps the model learn which formatting constraints or reasoning backtracking steps yield higher accuracy.

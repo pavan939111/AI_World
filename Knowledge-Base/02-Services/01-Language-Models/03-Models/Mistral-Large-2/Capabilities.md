@@ -1,55 +1,42 @@
-﻿---
-title: Mistral-Large-2 â€” Capabilities
+---
+title: Mistral-Large-2 — Capabilities
 service: 01-Language-Models
 model: Mistral-Large-2
 section: 03-Models
 file: Capabilities.md
 last_updated: 2026-07-28
-tags: [language-models, mistral-large-2, capabilities]
+tags: [language-models, mistral-large-2, capabilities, benchmarks]
 author: Antigravity AI Knowledge Engine
 ---
 
-# Mistral-Large-2 â€” Capabilities
+# Mistral-Large-2 — Capabilities
 
-## Model Specification: Mistral-Large-2
-- **Model Name**: Mistral-Large-2
-- **Primary Developer / Provider**: SOTA AI Provider
-- **Model Family**: Large Language Model Series
-- **Architecture**: Decoder-Only Transformer / Mixture-of-Experts (MoE)
-- **Context Window**: 128,000 to 2,000,000 tokens
-- **API Availability**: Official REST API, Python SDK, Cloud Ecosystems
+Mistral-Large-2 is designed for complex coding tasks, multilingual instruction following, and agentic tool integration.
 
-## Capabilities Detailed Breakdown
+---
 
-### Key Specifications & Highlights
-- **Reasoning & Instruction Following**: SOTA benchmark scores.
-- **Multilingual Support**: High precision across 50+ natural languages.
-- **Tool Use & Function Calling**: Native JSON schema enforcement.
+## 1. Native Multilingual Comprehension
 
-### Technical Performance Analysis
-1. **Strengths**: Exceptional reasoning, low latency, robust developer tooling.
-2. **Weaknesses**: Token pricing for high-volume enterprise ingestion.
-3. **Best Use Cases**: Enterprise RAG, agentic workflows, customer service, automated code writing.
+* **European Language Dominance**: Pre-trained on a diverse corpus containing English, French, German, Spanish, Italian, and Portuguese, demonstrating high accuracy in vocabulary translation, grammar synthesis, and local semantic context.
+* **Compact Tokenization**: The custom Tekken tokenizer uses a 131k vocabulary base to compress Western text, reducing overall token costs and latency for multilingual files compared to competing models.
 
-## Code Example (Mistral-Large-2 API Request)
-`python
-import os
-from openai import OpenAI
+---
 
-client = OpenAI(api_key=os.environ.get("API_KEY"))
+## 2. Advanced Coding & Tool Use
 
-response = client.chat.completions.create(
-    model="mistral-large-2",
-    messages=[
-        {"role": "system", "content": "You are a helpful AI assistant."},
-        {"role": "user", "content": "Provide a technical summary of Mistral-Large-2 capabilities."}
-    ],
-    temperature=0.7,
-    max_tokens=1000
-)
+* **Multi-Language Coding**: Demonstrates high proficiency in code generation, debugging, refactoring, and code explanation across major languages (Python, JavaScript, Go, C++, Java, Rust).
+* **Agentic Tool Calling**: Designed to parse complex tool schemas, execute recursive function calls, and return structured JSON schemas with low error rates.
 
-print(response.choices[0].message.content)
-`
+---
 
-## Related Models & Alternatives
-- See [08-Comparisons](../08-Comparisons/Decision-Matrix.md) for side-by-side performance benchmarks.
+## 3. Cognitive & Technical Benchmarks
+
+Mistral-Large-2 ranks high on standard evaluations:
+
+| Evaluation Metric | Benchmark Score | Target Area Measured |
+| :--- | :--- | :--- |
+| **MMLU** | 84.0% | General academic knowledge. |
+| **HumanEval** | 75.4% | Python coding syntax generation. |
+| **MBPP** | 76.2% | Python programming logic synthesis. |
+| **Math Llama-Eval** | 68.3% | Advanced multi-step math problems. |
+| **Multi-lingual GSM8K** | 80.5% | Multi-lingual mathematical reasoning. |

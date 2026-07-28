@@ -1,55 +1,48 @@
-﻿---
-title: Qwen-2-5-72B â€” Best-Practices
+---
+title: Qwen 2.5 72B — Best Practices
 service: 01-Language-Models
 model: Qwen-2-5-72B
 section: 03-Models
 file: Best-Practices.md
 last_updated: 2026-07-28
-tags: [language-models, qwen-2-5-72b, best-practices]
+tags: [language-models, qwen-2-5-72b, best-practices, optimization]
 author: Antigravity AI Knowledge Engine
 ---
 
-# Qwen-2-5-72B â€” Best-Practices
+# Qwen 2.5 72B — Production Best Practices
 
-## Model Specification: Qwen-2-5-72B
-- **Model Name**: Qwen-2-5-72B
-- **Primary Developer / Provider**: SOTA AI Provider
-- **Model Family**: Large Language Model Series
-- **Architecture**: Decoder-Only Transformer / Mixture-of-Experts (MoE)
-- **Context Window**: 128,000 to 2,000,000 tokens
-- **API Availability**: Official REST API, Python SDK, Cloud Ecosystems
+Guidelines and architecture patterns for optimizing local serving, weight compression, and concurrency configurations when deploying Qwen 2.5 72B.
 
-## Best-Practices Detailed Breakdown
+---
 
-### Key Specifications & Highlights
-- **Reasoning & Instruction Following**: SOTA benchmark scores.
-- **Multilingual Support**: High precision across 50+ natural languages.
-- **Tool Use & Function Calling**: Native JSON schema enforcement.
+## 1. Weight Quantization Selection
 
-### Technical Performance Analysis
-1. **Strengths**: Exceptional reasoning, low latency, robust developer tooling.
-2. **Weaknesses**: Token pricing for high-volume enterprise ingestion.
-3. **Best Use Cases**: Enterprise RAG, agentic workflows, customer service, automated code writing.
+To serve Qwen 2.5 72B without massive multi-GPU hardware arrays, developers apply quantization:
 
-## Code Example (Qwen-2-5-72B API Request)
-`python
-import os
-from openai import OpenAI
+* **For Cloud serving engines (vLLM / TGI)**:
+  * Select **AWQ (Activation-aware Weight Quantization)** in **4-bit** or **8-bit** formats. AWQ minimizes precision loss for outlier weights, preserving CJK translation fidelity and coding accuracy.
+* **For Edge / Desktop Workstations (Ollama / llama.cpp)**:
+  * Select the **GGUF** format with **`Q4_K_M`** (4-bit medium) or **`Q8_0`** (8-bit) compression. `Q4_K_M` splits parameter bit distributions across feed-forward and attention matrices, balancing memory footprint with generation coherence.
 
-client = OpenAI(api_key=os.environ.get("API_KEY"))
+---
 
-response = client.chat.completions.create(
-    model="qwen-2-5-72b",
-    messages=[
-        {"role": "system", "content": "You are a helpful AI assistant."},
-        {"role": "user", "content": "Provide a technical summary of Qwen-2-5-72B capabilities."}
-    ],
-    temperature=0.7,
-    max_tokens=1000
-)
+## 2. Multi-GPU Tensor Parallelism (TP)
 
-print(response.choices[0].message.content)
-`
+When hosting the dense 72B model using vLLM across multi-GPU nodes:
 
-## Related Models & Alternatives
-- See [08-Comparisons](../08-Comparisons/Decision-Matrix.md) for side-by-side performance benchmarks.
+* **Distribute TP Size**: Set the parameter `tensor_parallel_size` to match the exact number of active GPUs inside the node (e.g. dual A100s require `--tensor-parallel-size 2`).
+* **Keep Pipeline Parallelism Low**: Set pipeline parallelism (`pipeline_parallel_size`) to `1` inside single nodes to avoid high inter-node communication latency overheads.
+* **vLLM Command Line Example**:
+  ```bash
+  python -m vllm.entrypoints.openai.api_server \
+      --model Qwen/Qwen2.5-72B-Instruct \
+      --tensor-parallel-size 2 \
+      --port 8000
+  ```
+
+---
+
+## 3. API Security & sanitization
+
+* **Sanitize Input Headers**: Clean raw text inputs to strip any unescaped ChatML markers (such as `<|im_start|>` or `<|im_end|>`) to prevent prompt injection attempts.
+* **Enable reverse proxy authorization**: Wrap local serving instances with reverse proxies (e.g., Nginx or Envoy) to manage SSL termination and secure API token validations before routing requests to local GPU networks.

@@ -1,55 +1,46 @@
-﻿---
-title: Gemini-2-5-Pro â€” Best-Practices
+---
+title: Gemini 2.5 Pro — Best Practices
 service: 01-Language-Models
 model: Gemini-2-5-Pro
 section: 03-Models
 file: Best-Practices.md
 last_updated: 2026-07-28
-tags: [language-models, gemini-2-5-pro, best-practices]
+tags: [language-models, gemini-2-5-pro, best-practices, optimization]
 author: Antigravity AI Knowledge Engine
 ---
 
-# Gemini-2-5-Pro â€” Best-Practices
+# Gemini 2.5 Pro — Production Best Practices
 
-## Model Specification: Gemini-2-5-Pro
-- **Model Name**: Gemini-2-5-Pro
-- **Primary Developer / Provider**: SOTA AI Provider
-- **Model Family**: Large Language Model Series
-- **Architecture**: Decoder-Only Transformer / Mixture-of-Experts (MoE)
-- **Context Window**: 128,000 to 2,000,000 tokens
-- **API Availability**: Official REST API, Python SDK, Cloud Ecosystems
+Guidelines and integration patterns for optimizing latency, storage costs, and reliability when deploying Gemini 2.5 Pro in production.
 
-## Best-Practices Detailed Breakdown
+---
 
-### Key Specifications & Highlights
-- **Reasoning & Instruction Following**: SOTA benchmark scores.
-- **Multilingual Support**: High precision across 50+ natural languages.
-- **Tool Use & Function Calling**: Native JSON schema enforcement.
+## 1. Context Caching Design Patterns
 
-### Technical Performance Analysis
-1. **Strengths**: Exceptional reasoning, low latency, robust developer tooling.
-2. **Weaknesses**: Token pricing for high-volume enterprise ingestion.
-3. **Best Use Cases**: Enterprise RAG, agentic workflows, customer service, automated code writing.
+Because inputting large files (videos, codebases, books) is expensive and slow, developers should implement **Context Caching**:
 
-## Code Example (Gemini-2-5-Pro API Request)
-`python
-import os
-from openai import OpenAI
+* **Cache Candidate Criterium**: Cache assets that:
+  * Are larger than **32,768 tokens**.
+  * Will be queried repeatedly across consecutive API requests (such as codebase files or reference document libraries).
+* **Caching Layout**: Place cached assets at the very beginning of the contents array. Keep user-specific queries at the end. Any change to text *preceding* the cached block will invalidate the cache.
+* **Storage Governance**: Monitor the hourly cache storage fee ($4.50/1M tokens/hour) and explicitly delete caches when they are no longer needed, using the Files API cleanup mechanisms.
 
-client = OpenAI(api_key=os.environ.get("API_KEY"))
+---
 
-response = client.chat.completions.create(
-    model="gemini-2-5-pro",
-    messages=[
-        {"role": "system", "content": "You are a helpful AI assistant."},
-        {"role": "user", "content": "Provide a technical summary of Gemini-2-5-Pro capabilities."}
-    ],
-    temperature=0.7,
-    max_tokens=1000
-)
+## 2. Prefill Latency Mitigations
 
-print(response.choices[0].message.content)
-`
+* **Leverage Generation Streaming**: Always enable streaming completions. While prefill computation (reading the 2M context) takes time (up to 30s), streaming ensures that the model outputs completion tokens immediately as they are computed, lowering perceived latency.
+* **Process Media Files Asynchronously**: Upload large visual video assets using the Files API asynchronously *before* querying the model. Query the generation endpoint only after the video state shows `ACTIVE`.
 
-## Related Models & Alternatives
-- See [08-Comparisons](../08-Comparisons/Decision-Matrix.md) for side-by-side performance benchmarks.
+---
+
+## 3. Safety Filters & Refusal Tuning
+
+* **Calibrate Thresholds**: Default safety settings are conservative and can lead to silent refusals on developer or technical prompts. Explicitly scale safety thresholds to `BLOCK_ONLY_HIGH` or `BLOCK_NONE` for private, enterprise-audited workloads to reduce false positives.
+* **Handle Block Status Structurally**: Check the `finishReason` value in candidates. If it returns `SAFETY`, intercept the completion and output a custom notification rather than letting the application fail due to missing keys in the response body.
+
+---
+
+## 4. Version Control Governance
+
+* **Pin Dated Snapshot release versions**: Avoid using the floating model string pointer `gemini-2.5-pro` in production. Instead, pin to a specific, dated snapshot (e.g., `gemini-2.5-pro-001` or equivalent release) to ensure stability of reasoning outputs and formatting structures.

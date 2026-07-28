@@ -1,55 +1,81 @@
-﻿---
-title: Qwen-2-5-72B â€” Examples
+---
+title: Qwen 2.5 72B — Code Examples
 service: 01-Language-Models
 model: Qwen-2-5-72B
 section: 03-Models
 file: Examples.md
 last_updated: 2026-07-28
-tags: [language-models, qwen-2-5-72b, examples]
+tags: [language-models, qwen-2-5-72b, examples, code, python, local, cloud]
 author: Antigravity AI Knowledge Engine
 ---
 
-# Qwen-2-5-72B â€” Examples
+# Qwen 2.5 72B — Code Examples
 
-## Model Specification: Qwen-2-5-72B
-- **Model Name**: Qwen-2-5-72B
-- **Primary Developer / Provider**: SOTA AI Provider
-- **Model Family**: Large Language Model Series
-- **Architecture**: Decoder-Only Transformer / Mixture-of-Experts (MoE)
-- **Context Window**: 128,000 to 2,000,000 tokens
-- **API Availability**: Official REST API, Python SDK, Cloud Ecosystems
+Practical, executable Python examples demonstrating local serving using Ollama and serverless routing using Together AI.
 
-## Examples Detailed Breakdown
+---
 
-### Key Specifications & Highlights
-- **Reasoning & Instruction Following**: SOTA benchmark scores.
-- **Multilingual Support**: High precision across 50+ natural languages.
-- **Tool Use & Function Calling**: Native JSON schema enforcement.
+## Example 1: Local Inference via Ollama Client
 
-### Technical Performance Analysis
-1. **Strengths**: Exceptional reasoning, low latency, robust developer tooling.
-2. **Weaknesses**: Token pricing for high-volume enterprise ingestion.
-3. **Best Use Cases**: Enterprise RAG, agentic workflows, customer service, automated code writing.
+This script initiates a chat sequence on a locally hosted Ollama service. Ensure Ollama is installed and the model is running (`ollama run qwen2.5:72b`).
 
-## Code Example (Qwen-2-5-72B API Request)
-`python
-import os
-from openai import OpenAI
+```python
+import ollama
 
-client = OpenAI(api_key=os.environ.get("API_KEY"))
+# Initialize standard local client configuration
+client = ollama.Client(host="http://localhost:11434")
 
-response = client.chat.completions.create(
-    model="qwen-2-5-72b",
+response = client.chat(
+    model="qwen2.5:72b",
     messages=[
-        {"role": "system", "content": "You are a helpful AI assistant."},
-        {"role": "user", "content": "Provide a technical summary of Qwen-2-5-72B capabilities."}
+        {
+            "role": "system",
+            "content": "You are a concise engineering assistant. Analyze syntax logic."
+        },
+        {
+            "role": "user",
+            "content": "Explain the benefit of SwiGLU activation functions over standard ReLU."
+        }
     ],
-    temperature=0.7,
-    max_tokens=1000
+    options={
+        "temperature": 0.2,
+        "num_predict": 512
+    }
 )
 
-print(response.choices[0].message.content)
-`
+print("Ollama Qwen Response:")
+print(response["message"]["content"])
+```
 
-## Related Models & Alternatives
-- See [08-Comparisons](../08-Comparisons/Decision-Matrix.md) for side-by-side performance benchmarks.
+---
+
+## Example 2: Serverless Cloud Queries via Together AI
+
+This script uses Together AI's API endpoints to execute completions using the `together` SDK (`pip install together`).
+
+```python
+import os
+from together import Together
+
+# Initialize client using Together credentials
+client = Together(api_key=os.environ.get("TOGETHER_API_KEY"))
+
+response = client.chat.completions.create(
+    model="Qwen/Qwen2.5-72B-Instruct",
+    messages=[
+        {
+            "role": "system",
+            "content": "You are a translation assistant. Translate the text to Japanese."
+        },
+        {
+            "role": "user",
+            "content": "The application build completed successfully. Running sanity checks."
+        }
+    ],
+    temperature=0.3,
+    max_tokens=256
+)
+
+print("Together AI Qwen Response:")
+print(response.choices[0].message.content)
+```

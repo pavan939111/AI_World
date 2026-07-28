@@ -1,55 +1,76 @@
-﻿---
-title: Mistral-Large-2 â€” API
+---
+title: Mistral-Large-2 — API Reference
 service: 01-Language-Models
 model: Mistral-Large-2
 section: 03-Models
 file: API.md
 last_updated: 2026-07-28
-tags: [language-models, mistral-large-2, api]
+tags: [language-models, mistral-large-2, api, endpoint]
 author: Antigravity AI Knowledge Engine
 ---
 
-# Mistral-Large-2 â€” API
+# Mistral-Large-2 — API Reference
 
-## Model Specification: Mistral-Large-2
-- **Model Name**: Mistral-Large-2
-- **Primary Developer / Provider**: SOTA AI Provider
-- **Model Family**: Large Language Model Series
-- **Architecture**: Decoder-Only Transformer / Mixture-of-Experts (MoE)
-- **Context Window**: 128,000 to 2,000,000 tokens
-- **API Availability**: Official REST API, Python SDK, Cloud Ecosystems
+Direct REST API endpoints and HTTP request schemas for Mistral-Large-2.
 
-## API Detailed Breakdown
+---
 
-### Key Specifications & Highlights
-- **Reasoning & Instruction Following**: SOTA benchmark scores.
-- **Multilingual Support**: High precision across 50+ natural languages.
-- **Tool Use & Function Calling**: Native JSON schema enforcement.
+## 1. Chat completions Endpoint
 
-### Technical Performance Analysis
-1. **Strengths**: Exceptional reasoning, low latency, robust developer tooling.
-2. **Weaknesses**: Token pricing for high-volume enterprise ingestion.
-3. **Best Use Cases**: Enterprise RAG, agentic workflows, customer service, automated code writing.
+Mistral AI’s platform exposes REST endpoints that mirror standard OpenAI schemas:
 
-## Code Example (Mistral-Large-2 API Request)
-`python
-import os
-from openai import OpenAI
+* **HTTP Method**: `POST`
+* **Endpoint URL**: `https://api.mistral.ai/v1/chat/completions`
+* **Headers**:
+  * `Authorization`: `Bearer MISTRAL_API_KEY`
+  * `Content-Type`: `application/json`
 
-client = OpenAI(api_key=os.environ.get("API_KEY"))
+### Request Payload Example
+```json
+{
+  "model": "mistral-large-latest",
+  "messages": [
+    {
+      "role": "user",
+      "content": "Explain the role of the sliding window in context layers."
+    }
+  ],
+  "temperature": 0.3,
+  "max_tokens": 1024
+}
+```
 
-response = client.chat.completions.create(
-    model="mistral-large-2",
-    messages=[
-        {"role": "system", "content": "You are a helpful AI assistant."},
-        {"role": "user", "content": "Provide a technical summary of Mistral-Large-2 capabilities."}
-    ],
-    temperature=0.7,
-    max_tokens=1000
-)
+### Response Payload Structure
+```json
+{
+  "id": "chat-01...",
+  "object": "chat.completion",
+  "created": 1785239582,
+  "model": "mistral-large-latest",
+  "choices": [
+    {
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "The sliding window attention mechanism works by..."
+      },
+      "finish_reason": "stop"
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 15,
+    "completion_tokens": 25,
+    "total_tokens": 40
+  }
+}
+```
 
-print(response.choices[0].message.content)
-`
+---
 
-## Related Models & Alternatives
-- See [08-Comparisons](../08-Comparisons/Decision-Matrix.md) for side-by-side performance benchmarks.
+## 2. Server-Sent Events (SSE) Streaming
+
+Setting `"stream": true` begins chunked token delivery:
+
+* **Event Headers**: `Content-Type: text/event-stream`
+* **Streaming Chunks Payload**: Yields standard OpenAI-style data maps inside `choices[0].delta.content`.
+* **Terminator**: `data: [DONE]`

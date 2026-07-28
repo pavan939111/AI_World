@@ -1,55 +1,84 @@
-﻿---
-title: Qwen-2-5-72B â€” API
+---
+title: Qwen 2.5 72B — API Reference
 service: 01-Language-Models
 model: Qwen-2-5-72B
 section: 03-Models
 file: API.md
 last_updated: 2026-07-28
-tags: [language-models, qwen-2-5-72b, api]
+tags: [language-models, qwen-2-5-72b, api, endpoint]
 author: Antigravity AI Knowledge Engine
 ---
 
-# Qwen-2-5-72B â€” API
+# Qwen 2.5 72B — API Reference
 
-## Model Specification: Qwen-2-5-72B
-- **Model Name**: Qwen-2-5-72B
-- **Primary Developer / Provider**: SOTA AI Provider
-- **Model Family**: Large Language Model Series
-- **Architecture**: Decoder-Only Transformer / Mixture-of-Experts (MoE)
-- **Context Window**: 128,000 to 2,000,000 tokens
-- **API Availability**: Official REST API, Python SDK, Cloud Ecosystems
+API specifications, endpoint routes, and integration payload examples for Qwen 2.5 72B.
 
-## API Detailed Breakdown
+---
 
-### Key Specifications & Highlights
-- **Reasoning & Instruction Following**: SOTA benchmark scores.
-- **Multilingual Support**: High precision across 50+ natural languages.
-- **Tool Use & Function Calling**: Native JSON schema enforcement.
+## 1. OpenAI SDK Compatibility Route
 
-### Technical Performance Analysis
-1. **Strengths**: Exceptional reasoning, low latency, robust developer tooling.
-2. **Weaknesses**: Token pricing for high-volume enterprise ingestion.
-3. **Best Use Cases**: Enterprise RAG, agentic workflows, customer service, automated code writing.
+Most third-party providers (Together, Fireworks, local vLLM deployments) serve Qwen 2.5 72B using the OpenAI completions schema.
 
-## Code Example (Qwen-2-5-72B API Request)
-`python
-import os
-from openai import OpenAI
+* **HTTP Method**: `POST`
+* **Route Endpoint**: `/v1/chat/completions`
 
-client = OpenAI(api_key=os.environ.get("API_KEY"))
+### Request Payload Example
+```json
+{
+  "model": "Qwen/Qwen2.5-72B-Instruct",
+  "messages": [
+    {
+      "role": "user",
+      "content": "Explain CJK token compression efficiencies."
+    }
+  ],
+  "temperature": 0.4,
+  "max_tokens": 512
+}
+```
 
-response = client.chat.completions.create(
-    model="qwen-2-5-72b",
-    messages=[
-        {"role": "system", "content": "You are a helpful AI assistant."},
-        {"role": "user", "content": "Provide a technical summary of Qwen-2-5-72B capabilities."}
-    ],
-    temperature=0.7,
-    max_tokens=1000
-)
+### Response Payload Structure
+```json
+{
+  "id": "chatcmpl-qwen-123",
+  "object": "chat.completion",
+  "created": 1785239582,
+  "model": "Qwen/Qwen2.5-72B-Instruct",
+  "choices": [
+    {
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "Tokenizer vocabularies of 151k support..."
+      },
+      "finish_reason": "stop"
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 15,
+    "completion_tokens": 20,
+    "total_tokens": 35
+  }
+}
+```
 
-print(response.choices[0].message.content)
-`
+---
 
-## Related Models & Alternatives
-- See [08-Comparisons](../08-Comparisons/Decision-Matrix.md) for side-by-side performance benchmarks.
+## 2. Alibaba DashScope Native API
+
+When querying Alibaba's official DashScope engine, developers can use the direct endpoint:
+
+* **Endpoint URL**: `https://dashscope.aliyuncs.com/api/v1/services/aipost/text-generation/generation`
+* **Headers**:
+  * `Authorization`: `Bearer DASHSCOPE_API_KEY`
+  * `Content-Type`: `application/json`
+
+---
+
+## 3. Streaming Event Format (SSE)
+
+Setting `"stream": true` yields chunked updates using Server-Sent Events (SSE):
+
+* **Event Headers**: `Content-Type: text/event-stream`
+* **SSE Data Frame**: Returns incremental token blocks inside `choices[0].delta.content` matching standard streaming architectures.
+* **Terminator**: `data: [DONE]`

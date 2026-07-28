@@ -1,55 +1,42 @@
-﻿---
-title: DeepSeek-V3 â€” Pricing
+---
+title: DeepSeek-V3 — Pricing
 service: 01-Language-Models
 model: DeepSeek-V3
 section: 03-Models
 file: Pricing.md
 last_updated: 2026-07-28
-tags: [language-models, deepseek-v3, pricing]
+tags: [language-models, deepseek-v3, pricing, cost]
 author: Antigravity AI Knowledge Engine
 ---
 
-# DeepSeek-V3 â€” Pricing
+# DeepSeek-V3 — Pricing Reference
 
-## Model Specification: DeepSeek-V3
-- **Model Name**: DeepSeek-V3
-- **Primary Developer / Provider**: SOTA AI Provider
-- **Model Family**: Large Language Model Series
-- **Architecture**: Decoder-Only Transformer / Mixture-of-Experts (MoE)
-- **Context Window**: 128,000 to 2,000,000 tokens
-- **API Availability**: Official REST API, Python SDK, Cloud Ecosystems
+An overview of token rates and automatic prompt caching discounts for DeepSeek-V3 Cloud APIs.
 
-## Pricing Detailed Breakdown
+---
 
-### Key Specifications & Highlights
-- **Reasoning & Instruction Following**: SOTA benchmark scores.
-- **Multilingual Support**: High precision across 50+ natural languages.
-- **Tool Use & Function Calling**: Native JSON schema enforcement.
+## 1. DeepSeek Cloud API Pricing
 
-### Technical Performance Analysis
-1. **Strengths**: Exceptional reasoning, low latency, robust developer tooling.
-2. **Weaknesses**: Token pricing for high-volume enterprise ingestion.
-3. **Best Use Cases**: Enterprise RAG, agentic workflows, customer service, automated code writing.
+DeepSeek’s pricing structure is significantly lower than that of Western proprietary providers. Rates are calculated per 1 Million tokens:
 
-## Code Example (DeepSeek-V3 API Request)
-`python
-import os
-from openai import OpenAI
+| Token Transaction Type | Price (per 1M tokens) | Comparison to Cache Miss | Details |
+| :--- | :--- | :--- | :--- |
+| **Input (Cache Miss)** | **$0.14** | Base Rate | Applied when prompt text is parsed for the first time. |
+| **Input (Cache Hit)** | **$0.055** | **60% Discount** | Applied automatically when hitting prefix caches. |
+| **Output** | **$0.28** | Base Rate | Billed for generated tokens. |
 
-client = OpenAI(api_key=os.environ.get("API_KEY"))
+---
 
-response = client.chat.completions.create(
-    model="deepseek-v3",
-    messages=[
-        {"role": "system", "content": "You are a helpful AI assistant."},
-        {"role": "user", "content": "Provide a technical summary of DeepSeek-V3 capabilities."}
-    ],
-    temperature=0.7,
-    max_tokens=1000
-)
+## 2. Automatic Prompt Caching
 
-print(response.choices[0].message.content)
-`
+DeepSeek handles prompt caching implicitly at the server level, requiring no manual headers or API changes from developers:
 
-## Related Models & Alternatives
-- See [08-Comparisons](../08-Comparisons/Decision-Matrix.md) for side-by-side performance benchmarks.
+* **Prefix Caching**: If consecutive user requests share a matching prefix (e.g., identical system instructions, background datasets, or historical chat messages), the server automatically hits the cache.
+* **Saving**: Prompt tokens matching the cached prefix are billed at the **Cache Hit rate ($0.055 per 1M)**, reducing input costs by over 60% automatically.
+
+---
+
+## 3. Cost-Efficiency vs. Proprietary Alternatives
+
+* **Output Cost Comparison**: DeepSeek-V3's output token rate ($0.28 per 1M) is **98% cheaper** than Claude 3.7 Sonnet ($15.00 per 1M) and **97% cheaper** than GPT-4o ($10.00 per 1M).
+* **Workload Application**: Highly suited for processing massive documents, chat history logging, and high-concurrency translation or summarization jobs.

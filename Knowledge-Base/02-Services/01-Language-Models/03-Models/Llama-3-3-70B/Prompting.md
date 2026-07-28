@@ -1,55 +1,50 @@
-﻿---
-title: Llama-3-3-70B â€” Prompting
+---
+title: Llama 3.3 70B — Prompting Guide
 service: 01-Language-Models
 model: Llama-3-3-70B
 section: 03-Models
 file: Prompting.md
 last_updated: 2026-07-28
-tags: [language-models, llama-3-3-70b, prompting]
+tags: [language-models, llama-3-3-70b, prompting, template]
 author: Antigravity AI Knowledge Engine
 ---
 
-# Llama-3-3-70B â€” Prompting
+# Llama 3.3 70B — Prompting Guide
 
-## Model Specification: Llama-3-3-70B
-- **Model Name**: Llama-3-3-70B
-- **Primary Developer / Provider**: SOTA AI Provider
-- **Model Family**: Large Language Model Series
-- **Architecture**: Decoder-Only Transformer / Mixture-of-Experts (MoE)
-- **Context Window**: 128,000 to 2,000,000 tokens
-- **API Availability**: Official REST API, Python SDK, Cloud Ecosystems
+To maximize output quality and instruction following in Llama 3.3 70B, developers should format prompts using Llama 3’s native special chat tokens and templates.
 
-## Prompting Detailed Breakdown
+---
 
-### Key Specifications & Highlights
-- **Reasoning & Instruction Following**: SOTA benchmark scores.
-- **Multilingual Support**: High precision across 50+ natural languages.
-- **Tool Use & Function Calling**: Native JSON schema enforcement.
+## 1. Native Chat Template Structure
 
-### Technical Performance Analysis
-1. **Strengths**: Exceptional reasoning, low latency, robust developer tooling.
-2. **Weaknesses**: Token pricing for high-volume enterprise ingestion.
-3. **Best Use Cases**: Enterprise RAG, agentic workflows, customer service, automated code writing.
+Llama 3.3 models use specific tokens to partition system directives, user turns, and assistant replies. If you use raw text inputs (instead of an SDK chat array), formatting must match this pattern:
 
-## Code Example (Llama-3-3-70B API Request)
-`python
-import os
-from openai import OpenAI
+```text
+<|begin_of_text|><|start_header_id|>system<|end_header_id|>
 
-client = OpenAI(api_key=os.environ.get("API_KEY"))
+You are a database optimization assistant. Analyze the user's SQL query.<|eot_id|><|start_header_id|>user<|end_header_id|>
 
-response = client.chat.completions.create(
-    model="llama-3-3-70b",
-    messages=[
-        {"role": "system", "content": "You are a helpful AI assistant."},
-        {"role": "user", "content": "Provide a technical summary of Llama-3-3-70B capabilities."}
-    ],
-    temperature=0.7,
-    max_tokens=1000
-)
+SELECT * FROM users WHERE signup_date > '2026-01-01';<|eot_id|><|start_header_id|>assistant<|end_header_id|>
+```
 
-print(response.choices[0].message.content)
-`
+### Special Token Definitions
+* **`<|begin_of_text|>`**: Declares the start of the sequence.
+* **`<|start_header_id|>`** and **`<|end_header_id|>`**: Wraps the role identifier (`system`, `user`, or `assistant`).
+* **`<|eot_id|>`**: **End of Turn** indicator. Tells the engine that a participant has finished their message block.
 
-## Related Models & Alternatives
-- See [08-Comparisons](../08-Comparisons/Decision-Matrix.md) for side-by-side performance benchmarks.
+---
+
+## 2. System Instruction Optimization
+
+Llama 3.3 70B is highly sensitive to the `system` context block.
+* **Define Constraints Early**: Specify output schemas, disallowed behavior, and rules immediately within the system block.
+* **Use Direct Commands**: Use imperative verbs (e.g., "Analyze," "Output," "Translate") rather than passive descriptions.
+* **Formatting Indicators**: Instruct the model on how to present code (e.g., "Return code inside standard markdown fences").
+
+---
+
+## 3. Structural Output Parsing
+
+When generating JSON schemas or tables:
+* Provide a few-shot markdown example within the prompt to establish structural consistency.
+* Llama 3.3 70B is prone to conversational prefixes (e.g., "Sure, here is your JSON:"). Explicitly append: "Return only the raw output block. Do not include conversational greetings or post-explanations." to the end of the user prompt.

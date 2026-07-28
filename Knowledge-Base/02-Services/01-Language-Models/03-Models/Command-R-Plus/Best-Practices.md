@@ -1,55 +1,40 @@
-﻿---
-title: Command-R-Plus â€” Best-Practices
+---
+title: Command R+ — Best Practices
 service: 01-Language-Models
 model: Command-R-Plus
 section: 03-Models
 file: Best-Practices.md
 last_updated: 2026-07-28
-tags: [language-models, command-r-plus, best-practices]
+tags: [language-models, command-r-plus, best-practices, optimization]
 author: Antigravity AI Knowledge Engine
 ---
 
-# Command-R-Plus â€” Best-Practices
+# Command R+ — Production Best Practices
 
-## Model Specification: Command-R-Plus
-- **Model Name**: Command-R-Plus
-- **Primary Developer / Provider**: SOTA AI Provider
-- **Model Family**: Large Language Model Series
-- **Architecture**: Decoder-Only Transformer / Mixture-of-Experts (MoE)
-- **Context Window**: 128,000 to 2,000,000 tokens
-- **API Availability**: Official REST API, Python SDK, Cloud Ecosystems
+Guidelines and architecture patterns for optimizing document grounding, managing weight quantization size, and routing requests for Cohere's Command R+.
 
-## Best-Practices Detailed Breakdown
+---
 
-### Key Specifications & Highlights
-- **Reasoning & Instruction Following**: SOTA benchmark scores.
-- **Multilingual Support**: High precision across 50+ natural languages.
-- **Tool Use & Function Calling**: Native JSON schema enforcement.
+## 1. Grounded Generation RAG Optimization
 
-### Technical Performance Analysis
-1. **Strengths**: Exceptional reasoning, low latency, robust developer tooling.
-2. **Weaknesses**: Token pricing for high-volume enterprise ingestion.
-3. **Best Use Cases**: Enterprise RAG, agentic workflows, customer service, automated code writing.
+To prevent input context bloat and optimize citation coverage:
 
-## Code Example (Command-R-Plus API Request)
-`python
-import os
-from openai import OpenAI
+* **Chunk and Prune Input Documents**: Rather than passing raw text files directly, pre-process datasets using semantic chunking models. Pass only the top relevant chunks (typically **10 to 20 snippets**, max 300 words each) inside the `"documents"` array parameter.
+* **Normalize Document Fields**: Keep document objects clean by passing only three primary properties: `id`, `title`, and `snippet`. Avoid injecting large unrelated metadata dictionaries into the API payload.
+* **Keep Temperatures Low**: For high grounding accuracy and precise citation mapping, set `temperature` strictly to **`0.0` or `0.1`**. Higher temperatures increase conversational fluency but can cause minor citation misalignments.
 
-client = OpenAI(api_key=os.environ.get("API_KEY"))
+---
 
-response = client.chat.completions.create(
-    model="command-r-plus",
-    messages=[
-        {"role": "system", "content": "You are a helpful AI assistant."},
-        {"role": "user", "content": "Provide a technical summary of Command-R-Plus capabilities."}
-    ],
-    temperature=0.7,
-    max_tokens=1000
-)
+## 2. Quantization Selections for Local Serving
 
-print(response.choices[0].message.content)
-`
+* **For Production Serving (vLLM / TGI)**:
+  * Select **AWQ (Activation-aware Weight Quantization)** in **4-bit** or **8-bit** formats. AWQ preserves attention layer accuracy, keeping citation index parameters correct.
+* **For Local Development Workstations (Ollama)**:
+  * Select the **GGUF** format with **`Q4_K_M`** (4-bit medium) or **`Q8_0`** (8-bit) compression. `Q4_K_M` balances memory VRAM footprint (~60 GB) and generation quality.
 
-## Related Models & Alternatives
-- See [08-Comparisons](../08-Comparisons/Decision-Matrix.md) for side-by-side performance benchmarks.
+---
+
+## 3. Concurrency & Rate Limit Retries
+
+* **Design Exponential Backoff**: Cohere endpoints return HTTP `429` (Too Many Requests) under high congestion. Write custom retry loops with exponential backoff configurations to handle rate limits.
+* **Route Failover**: If endpoints fail, configure routers to failover to serverless endpoints of equivalent context size (such as Together AI's Command R+ endpoints or Llama 3.3 70B endpoints).
