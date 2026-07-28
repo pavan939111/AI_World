@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="AI Tools Encyclopedia 2026 Edition — Tri-Fold AI Knowledge Base exploring the ecosystem By Provider, By Service, and By Side-by-Side Comparison.">
+  <title>AI Knowledge Base (2026 Edition) — Providers, Services & Comparisons</title>
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  
+  <!-- Custom Styles -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header class="app-header">
+    <div class="header-container">
+      <div class="brand">
+        <span class="brand-logo">⚡</span>
+        <div>
+          <span class="brand-title">AI Knowledge Base</span>
+          <span class="edition-badge">2026 Tri-Fold Edition</span>
+        </div>
+      </div>
+      
+      <nav class="nav-tabs" id="viewNavTabs">
+        <button class="nav-btn active" data-view="providers">🏢 By Provider</button>
+        <button class="nav-btn" data-view="services">⚡ By Service</button>
+        <button class="nav-btn" data-view="comparisons">📊 By Comparison</button>
+        <button class="nav-btn" data-view="calculator">🧮 Cost Calculator</button>
+        <button class="nav-btn" data-view="architecture">🏗️ Architectures</button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- HERO SECTION -->
+  <section class="hero-section">
+    <h1 class="hero-title">The Complete <span class="hero-gradient">AI Knowledge Base</span></h1>
+    <p class="hero-subtitle">
+      Explore the modern AI developer stack across 3 perspectives: <strong>By Provider</strong> ("What does OpenAI offer?"), <strong>By Service</strong> ("Who offers Image Generation?"), and <strong>By Comparison</strong> ("Which provider is best/cheapest?").
+    </p>
+  </section>
+
+  <!-- CONTROLS BAR (SEARCH & FILTERS) -->
+  <div class="controls-bar" id="controlsBar">
+    <div class="search-box">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="searchInput" class="search-input" placeholder="Search providers, services, models, or APIs...">
+    </div>
+    
+    <div class="filter-tags" id="filterTags">
+      <button class="filter-chip active" data-filter="all">All Ecosystem</button>
+      <button class="filter-chip" data-filter="api">Has REST API</button>
+    </div>
+  </div>
+
+  <!-- MAIN CONTENT CONTAINER -->
+  <main class="main-content">
+    
+    <!-- PROVIDERS VIEW (BY PROVIDER) -->
+    <div id="providersView">
+      <div class="tools-grid" id="toolsGrid">
+        <!-- Dynamic Provider Cards Rendered via JS -->
+      </div>
+    </div>
+
+    <!-- SERVICES VIEW (BY SERVICE) -->
+    <div id="servicesView" style="display: none;">
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 1.5rem;" id="servicesGrid">
+        <!-- Dynamic Service Cards Rendered via JS -->
+      </div>
+    </div>
+
+    <!-- COMPARISONS VIEW (BY COMPARISON) -->
+    <div id="comparisonsView" style="display: none;">
+      <div class="matrix-container">
+        <table class="matrix-table" id="matrixTable">
+          <thead>
+            <tr>
+              <th>Provider</th>
+              <th>Flagship Model / Service</th>
+              <th>API Access</th>
+              <th>Input Cost / 1M</th>
+              <th>Output Cost / 1M</th>
+              <th>Context / Latency</th>
+              <th>Key Strengths & Tagline</th>
+            </tr>
+          </thead>
+          <tbody id="matrixTableBody">
+            <!-- Dynamic Rows -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- COST CALCULATOR VIEW -->
+    <div id="calculatorView" style="display: none;">
+      <div class="calculator-panel">
+        <h2>🧮 Interactive AI API Cost Calculator (Monthly)</h2>
+        <p style="color: var(--text-muted); margin-bottom: 1rem;">Estimate your monthly API bill across top AI providers based on expected token traffic or media generation.</p>
+        
+        <div class="calc-grid">
+          <div>
+            <div class="form-group">
+              <label class="form-label" for="calcProvider">Select AI Provider Model</label>
+              <select id="calcProvider" class="form-control">
+                <option value="gpt4o">OpenAI — GPT-4o ($2.50 in / $10.00 out)</option>
+                <option value="o3mini">OpenAI — o3-mini Reasoning ($1.10 in / $4.40 out)</option>
+                <option value="gpt4omini">OpenAI — GPT-4o-mini ($0.15 in / $0.60 out)</option>
+                <option value="claude37">Anthropic — Claude 3.7 Sonnet ($3.00 in / $15.00 out)</option>
+                <option value="claudehaiku">Anthropic — Claude 3.5 Haiku ($0.80 in / $4.00 out)</option>
+                <option value="gemini25pro">Google — Gemini 2.5 Pro ($1.25 in / $5.00 out)</option>
+                <option value="geminiflash">Google — Gemini 2.5 Flash ($0.075 in / $0.30 out)</option>
+              </select>
+            </div>
+            
+            <div class="form-group">
+              <label class="form-label" for="inputTokensM">Monthly Input Tokens (Millions)</label>
+              <input type="number" id="inputTokensM" class="form-control" value="10" min="0">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="outputTokensM">Monthly Output Tokens (Millions)</label>
+              <input type="number" id="outputTokensM" class="form-control" value="2" min="0">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="cachedRatio">Prompt Cache Discount Percentage</label>
+              <select id="cachedRatio" class="form-control">
+                <option value="0">0% Prompt Caching</option>
+                <option value="0.5">50% Cached Prompts (Standard)</option>
+                <option value="0.8">80% Cached Prompts (Heavy System Prompts)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="calc-results-box">
+            <span class="kv-label">Estimated Monthly Expense</span>
+            <div class="total-cost-val" id="totalCostDisplay">$0.00</div>
+            <div class="kv-pair">
+              <span class="kv-label">Input Token Subtotal:</span>
+              <span class="kv-val" id="inputSubtotal">$0.00</span>
+            </div>
+            <div class="kv-pair">
+              <span class="kv-label">Output Token Subtotal:</span>
+              <span class="kv-val" id="outputSubtotal">$0.00</span>
+            </div>
+            <div class="kv-pair">
+              <span class="kv-label">Prompt Cache Savings:</span>
+              <span class="kv-val" style="color: var(--accent-green);" id="cacheSavings">-$0.00</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PRODUCTION ARCHITECTURE VIEW -->
+    <div id="architectureView" style="display: none;">
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 1.5rem;" id="archGrid">
+        <!-- Rendered via JS -->
+      </div>
+    </div>
+
+  </main>
+
+  <!-- PROVIDER SPECS MODAL INSPECTOR -->
+  <div class="modal-backdrop" id="modalBackdrop">
+    <div class="modal-content">
+      
+      <!-- Modal Header -->
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <span id="modalLogo" style="font-size: 2.2rem;">🤖</span>
+          <div>
+            <h2 id="modalToolName" style="color: #fff; font-size: 1.4rem;">Provider Name</h2>
+            <span id="modalCategory" style="color: var(--text-dim); font-size: 0.85rem;">Category</span>
+          </div>
+        </div>
+        <button class="btn-close" id="btnCloseModal">&times;</button>
+      </div>
+
+      <!-- Modal Nav Tabs -->
+      <div class="modal-tabs" id="modalTabNav">
+        <button class="modal-tab-btn active" data-tab="overview">1. Overview & Models</button>
+        <button class="modal-tab-btn" data-tab="apis">2. APIs & Services</button>
+        <button class="modal-tab-btn" data-tab="sdks">3. SDKs, Auth & Pricing</button>
+        <button class="modal-tab-btn" data-tab="code">4. Code Example</button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="modal-body" id="modalBodyContent">
+        <!-- Content dynamic -->
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
